@@ -1,5 +1,5 @@
 engagement: ENG-0001
-date: '2026-10-15T17:10:57+00:00'
+date: '2026-10-15T17:42:09+00:00'
 worktree: /home/ultimatron/projects/solo/wt/eng-0001
 checks:
   rapport:
@@ -26,6 +26,9 @@ checks:
   charte:
     resultat: ok
     detail: no line introduced breaks the charter
+  reprise:
+    resultat: ok
+    detail: REPORT.md answers the 6 violation(s) of MAN-ENG-0001-1
   mutants:
     resultat: ok
     detail: REPORT.md names the mutants it replayed, which the verifier replays in turn
