@@ -4,14 +4,20 @@
 
 PASS against the definition_of_done of ENG-0001 (four criteria, each with the evidence that proves it):
 
-1. Met: `packages/kernel` is a TypeScript package whose runtime code imports nothing from Node or the DOM (`grep -rn "from \"node:\|require(\|window.\|document." packages/kernel/src` returns nothing; its `tsconfig.json` compiles with `types: []` and `lib: ["ES2022"]`). From the repository root, `pnpm typecheck` passes and `pnpm test` reports 12 files, 35 tests, all passing.
-2. Met: every planned test of the eleven requirements exists under its identifier in the title, runs on the in-memory adapters, and passes; four tests were added by the rework (TST-KER-003g, 003h, 006c, 007c). The table below names each file and title.
+1. Met: `packages/kernel` is a TypeScript package whose runtime code imports nothing from Node or the DOM (`grep -rn "from \"node:\|require(\|window.\|document." packages/kernel/src` returns nothing; its `tsconfig.json` compiles with `types: []` and `lib: ["ES2022"]`). From the repository root, `pnpm typecheck` passes and `pnpm test` reports 12 files, 36 tests, all passing.
+2. Met: every planned test of the eleven requirements exists under its identifier in the title, runs on the in-memory adapters, and passes; five tests were added by the reworks (TST-KER-003g, 003h, 006c, 006d, 007c). The table below names each file and title.
 3. Met: the property tests draw their inputs from a seeded generator and use independent oracles: TST-KER-003f and TST-KER-011b take the generator's own record of which passages an edit touched (and the test's own graph walk for dependents) as ground truth; TST-KER-005d checks an invariant on the data and asserts that stale objects and refreshes were observed; TST-KER-014a recounts from the JSON files with its own walk under the requirement's definition; the SHA-256 test is differential against the platform digest on random Unicode strings.
 4. Met: this report.
 
 ## Rework
 
-Answers to `.eng/REWORK.md` (verdict MAN-ENG-0001-1), by mark.
+### After MAN-ENG-0001-2 (one mark)
+
+- V1: `undo` now refuses an actor other than the author when the undo would change the approval state (the undo of an acceptance or of a rejection), with code `not_author` and a `refused` event recorded; the object is untouched. An undo that leaves the approval state as it is (an edit, a deletion, a refresh) stays open to the actor. Proof: `ker-006.test.ts` > TST-KER-006d. Mutant "a non-author may undo an acceptance or a rejection" falls under it.
+
+### After MAN-ENG-0001-1 (six marks)
+
+Answers to the marks of verdict MAN-ENG-0001-1.
 
 - V1: TST-KER-005d now edits inside the anchored word (operation 0 replaces a middle character, so the passage changes and the object becomes stale), keeps the revert and refresh operations, and asserts at the end that stale objects were observed and that explicit refreshes happened. Proof: `ker-005.test.ts` > TST-KER-005d; the mutant "a non-intact anchor does not make its object stale" falls under it.
 - V2: `createObject` refuses an origin `author` from an actor other than the author, with code `not_author` and a `refused` event recorded (`kernel.ts`, createObject). Proof: `ker-006.test.ts` > TST-KER-006c. Mutant "anyone may create an object of origin author" falls.
@@ -33,7 +39,7 @@ Executable references follow the codification: file path, then `describe > it` t
 | SPEC-KER-003 | `ker-003.test.ts` > SPEC-KER-003 Anchors survive edits > TST-KER-003a to TST-KER-003h | IMPLEMENTED |
 | SPEC-KER-004 | `ker-004.test.ts` > SPEC-KER-004 Manuscript versions > TST-KER-004a, TST-KER-004b, TST-KER-004c | IMPLEMENTED |
 | SPEC-KER-005 | `ker-005.test.ts` > SPEC-KER-005 Staleness > TST-KER-005a to TST-KER-005d | IMPLEMENTED |
-| SPEC-KER-006 | `ker-006.test.ts` > SPEC-KER-006 Proposals and acceptance > TST-KER-006a, TST-KER-006b, TST-KER-006c | IMPLEMENTED |
+| SPEC-KER-006 | `ker-006.test.ts` > SPEC-KER-006 Proposals and acceptance > TST-KER-006a, TST-KER-006b, TST-KER-006c, TST-KER-006d | IMPLEMENTED |
 | SPEC-KER-007 | `ker-007.test.ts` > SPEC-KER-007 Reversible object actions > TST-KER-007a, TST-KER-007b, TST-KER-007c | IMPLEMENTED |
 | SPEC-KER-010 | `ker-010.test.ts` > SPEC-KER-010 Provenance query > TST-KER-010a, TST-KER-010b | IMPLEMENTED |
 | SPEC-KER-011 | `ker-011.test.ts` > SPEC-KER-011 Incremental invalidation > TST-KER-011a, TST-KER-011b | IMPLEMENTED |
@@ -67,6 +73,7 @@ Run with the script that injects one mutant at a time in the source, runs the na
 | SPEC-KER-005 | a non-intact anchor does not make its object stale | ker-005.test.ts |
 | SPEC-KER-006 | anyone may accept or reject | ker-006.test.ts |
 | SPEC-KER-006 | anyone may create an object of origin author | ker-006.test.ts |
+| SPEC-KER-006 | a non-author may undo an acceptance or a rejection | ker-006.test.ts |
 | SPEC-KER-007 | undo restores the current state instead of the previous one | ker-007.test.ts |
 | SPEC-KER-007 | the tombstone persisted before its event | ker-007.test.ts |
 | SPEC-KER-010 | a dependency cycle accepted | ker-010.test.ts |
@@ -83,13 +90,15 @@ Run with the script that injects one mutant at a time in the source, runs the na
 
 ## Open points that need someone else
 
-None. No requirement, milestone, interface or scope needed a change.
+One, drafted in full for the coordinator to file under a reserved number (SCP):
+
+**SCP, change of SPEC-KER-006 (vehicle: SCP; decided by the operator).** Intent: say what an edit, a deletion or a refresh of an accepted object by an actor other than the author does, since the requirement rules the approval state only and principle P01 says nothing becomes accepted content by an assistant's action. Scope: the requirement text and coverage of SPEC-KER-006, kernel domain only. Proposed modification, current text: "An object created by the assistant or by an import must enter the project as a proposal, and only an author action must change it to accepted or rejected." New text: the same sentence, followed by "An edit of an accepted object's anchors, title or body by an actor other than the author must return the object to the proposed state; a deletion or a refresh of an accepted object by such an actor must be refused with not_author and recorded." Example: the assistant rewrites the body of an accepted fact; the fact shows as proposed until the author accepts it again; the assistant cannot delete it. Recommendation: accept, because the alternative (an assistant edit leaving the object accepted) lets generated content stand as accepted without an author action; the cost is two cases in the kernel and their tests, inside the kernel domain. Validation: TST-KER-006e (edit by non-author returns to proposed), TST-KER-006f (deletion and refresh by non-author refused).
 
 ## For information, no action required
 
 - Identifiers from the sequence adapter are shared by objects, versions and events, so the numbers in a test interleave; the Node adapter will use random identifiers.
 - The kernel writes blobs, then objects, then the versions index, then the state, on every save; the Node adapter of ENG-0002 makes each write atomic and the tests of SPEC-KER-012 inject faults between these steps.
-- `editObject`, `deleteObject`, `undo` and `refresh` apply no actor rule beyond the author rule of creation, acceptance and rejection; the rest belongs to domain AST.
+- The actor rule of SPEC-KER-006 is applied wherever the approval state can change: creation of an author object, acceptance, rejection, and the undo of either. `editObject`, `deleteObject` and `refresh` do not change the approval state and apply no actor rule; what an edit or a deletion of an accepted object by a non-author actor should do is the SCP drafted under the open points.
 
 ## Documentation updated
 

@@ -4,7 +4,7 @@ titre: "Provenance kernel: objects, anchors, versions, staleness, invalidation, 
 promettant: "coordinator-session"
 reserve_par: "Karim Dhrif <karimdhrif4444@gmail.com>"
 pris_le: '2026-10-15T16:44:52+00:00'
-restitue_le: '2026-10-15T17:42:13+00:00'
+restitue_le: '2026-10-15T18:00:45+00:00'
 beneficiaire: "jalon:J-KER"
 exigences:
   - SPEC-KER-001
