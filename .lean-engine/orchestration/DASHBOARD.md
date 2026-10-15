@@ -40,4 +40,5 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ## 4. Anomalies
 
-- (aucune)
+- dette documentaire : SPEC-KER-003 (impact déclaré par ENG-0001, non résorbé)
+- dette documentaire : SPEC-KER-011 (impact déclaré par ENG-0001, non résorbé)

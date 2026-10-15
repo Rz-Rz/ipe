@@ -1,5 +1,5 @@
 engagement: ENG-0001
-date: '2026-10-15T17:07:59+00:00'
+date: '2026-10-15T17:10:25+00:00'
 worktree: /home/ultimatron/projects/solo/wt/eng-0001
 checks:
   rapport:
@@ -9,11 +9,11 @@ checks:
     resultat: ok
     detail: REPORT.md declares PASS against the definition of done
   remontee_spec:
-    resultat: ko
-    detail: SPEC_UPDATE.md absent
+    resultat: ok
+    detail: SPEC_UPDATE.md couvre toutes les exigences
   remontee_doc:
-    resultat: ko
-    detail: DOC_UPDATE.md absent
+    resultat: ok
+    detail: DOC_UPDATE.md couvre toutes les exigences
   conformite_scope:
     resultat: ok
     detail: diff confiné au scope déclaré
@@ -27,8 +27,8 @@ checks:
     resultat: ok
     detail: no line introduced breaks the charter
   mutants:
-    resultat: a_verifier
-    detail: 'REPORT.md names no mutant while 11 requirement(s) enter the specification: each property stated in absolute terms is guarded by a test shown to fall under a mutant, or stated with its reserve'
+    resultat: ok
+    detail: REPORT.md names the mutants it replayed, which the verifier replays in turn
   tests:
     resultat: a_verifier
     detail: à rejouer par le verifier (jamais présumés ici)
