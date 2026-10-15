@@ -1,0 +1,8 @@
+# IPE: agent rules
+
+1. Product intent: `docs/IPE_PRODUCT_BASELINE.md` (version in its header). Vision on one page: `docs/IPE_VISION_A3.md`. Decisions: `docs/decisions/` until the steering kit is installed, then `.agelaios/orchestration/DA/` and `.agelaios/orchestration/ADR/`.
+2. Requirements: `dossier-recette/` (`SPEC-DOM-NNN`, conventions in `dossier-recette/02_CODIFICATION.md`). Requirements are written for the first milestone only. A requirement changes by SCP; a scope or architecture choice goes through a DA. An agent informs; it does not decide the product.
+3. Steering: the Agelaios lean kit, source in `/home/ultimatron/projects/cercle/oc2-edge/agelaios-agentic-lean/` (see its `INTEGRATION.md`). Not installed in this repository yet. The milestone table already sits at the kit's path, `.agelaios/orchestration/MILESTONES.md`. After installation: run `/bootstrap`, reserve numbers with `agelaios numero`, and move `docs/decisions/` into the state tree.
+4. Writing: English. No em-dash. No calendar estimate in a planning document. No invented figure; an unknown value is written "target value, to confirm". "must", "should", and "may" are never mixed in one requirement. One term, one concept: the glossary is Appendix B of the baseline.
+5. Commits: no AI tooling name and no attribution trailer in any commit, in the message or in the content. The author identity is the repository owner's git identity.
+6. Architecture is not decided. A technical choice is proposed against the needs and recorded. The first obligations are in baseline Section 8: the provenance-bearing object model (P07) serves every need in scope, and one core serves the desktop and browser surfaces (DA-0002).
