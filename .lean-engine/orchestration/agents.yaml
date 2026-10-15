@@ -1,0 +1,3 @@
+# Flotte : plafond de sessions simultanées et pause globale.
+max_live: 3
+paused: false

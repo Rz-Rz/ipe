@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "pose_le": "2026-10-15T16:38:35+00:00",
+  "fichiersCrees": [
+    ".lean-engine/orchestration/agents.yaml",
+    ".lean-engine/orchestration/claims.yaml",
+    ".lean-engine/orchestration/config.yaml",
+    ".claude/commands/bootstrap.md",
+    ".claude/commands/etat.md",
+    ".claude/commands/eng.md",
+    ".claude/commands/verify.md",
+    ".claude/commands/delta.md",
+    ".claude/commands/arbitrage.md",
+    ".claude/agents/implementor.md",
+    ".claude/agents/verifier.md",
+    ".claude/settings.json",
+    ".lean-engine/bin/lean.cjs",
+    ".lean-engine/bin/eng.cjs",
+    ".lean-engine/bin/hooks/guard_scope.cjs",
+    ".lean-engine/bin/hooks/guard_style.cjs",
+    ".lean-engine/bin/hooks/guard_identite.cjs",
+    ".lean-engine/bin/hooks/guard_lecture.cjs",
+    ".lean-engine/bin/hooks/require_report.cjs",
+    ".lean-engine/bin/hooks/session_context.cjs",
+    ".lean-engine/bin/VERSION",
+    ".lean-engine/githooks/pre-commit",
+    ".lean-engine/githooks/commit-msg",
+    ".lean-engine/githooks/pre-merge-commit",
+    ".lean-engine/githooks/pre-push",
+    ".lean-engine/githooks/post-merge"
+  ],
+  "dossiersCrees": [
+    ".lean-engine/orchestration/ENG",
+    ".lean-engine/orchestration/DA",
+    ".lean-engine/orchestration/SCP",
+    ".lean-engine/orchestration/ADR",
+    ".lean-engine/orchestration/livraisons",
+    ".lean-engine/orchestration/runs",
+    ".lean-engine/orchestration/journal",
+    ".lean-engine/orchestration/captures",
+    ".claude/commands",
+    ".claude",
+    ".claude/agents",
+    ".lean-engine/bin",
+    ".lean-engine/bin/hooks",
+    ".lean-engine/githooks"
+  ],
+  "blocsAjoutes": [
+    "CLAUDE.md"
+  ],
+  "clesJson": [],
+  "contenusAvant": {
+    "CLAUDE.md": "# IPE: agent rules\n\n1. Product intent: `docs/IPE_PRODUCT_BASELINE.md` (version in its header). Vision on one page: `docs/IPE_VISION_A3.md`. Decisions: `docs/decisions/` until the steering kit is installed, then `.agelaios/orchestration/DA/` and `.agelaios/orchestration/ADR/`.\n2. Requirements: `dossier-recette/` (`SPEC-DOM-NNN`, conventions in `dossier-recette/02_CODIFICATION.md`). Requirements are written for the first milestone only. A requirement changes by SCP; a scope or architecture choice goes through a DA. An agent informs; it does not decide the product.\n3. Steering: the Agelaios lean kit, source in `/home/ultimatron/projects/cercle/oc2-edge/agelaios-agentic-lean/` (see its `INTEGRATION.md`). Not installed in this repository yet. The milestone table already sits at the kit's path, `.agelaios/orchestration/MILESTONES.md`. After installation: run `/bootstrap`, reserve numbers with `agelaios numero`, and move `docs/decisions/` into the state tree.\n4. Writing: English. No em-dash. No calendar estimate in a planning document. No invented figure; an unknown value is written \"target value, to confirm\". \"must\", \"should\", and \"may\" are never mixed in one requirement. One term, one concept: the glossary is Appendix B of the baseline.\n5. Commits: no AI tooling name and no attribution trailer in any commit, in the message or in the content. The author identity is the repository owner's git identity.\n6. Architecture is not decided. A technical choice is proposed against the needs and recorded. The first obligations are in baseline Section 8: the provenance-bearing object model (P07) serves every need in scope, and one core serves the desktop and browser surfaces (DA-0002).\n"
+  },
+  "crochetsGit": {
+    "hooksPathAvant": null,
+    "branche": true
+  }
+}

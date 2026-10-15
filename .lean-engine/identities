@@ -1,0 +1,4 @@
+# Identities admitted to sign in this repository, one per line: Name <mail>.
+# The first one is the principal identity. Managed by `lean identite use`:
+# a person is added at their own request, and a tool is never an identity.
+Karim Dhrif <karimdhrif4444@gmail.com>

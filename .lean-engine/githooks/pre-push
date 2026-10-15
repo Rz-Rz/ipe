@@ -1,0 +1,62 @@
+#!/bin/sh
+# Numbering guard (pre-push): one number, one record.
+# Placed by Lean Engine. PURE SH: no interpreter is required,
+# so the rule holds under Git for Windows and under WSL alike.
+for d in .lean-engine/orchestration/ENG .lean-engine/orchestration/SCP .lean-engine/orchestration/DA .lean-engine/orchestration/ADR; do
+  [ -d "$d" ] || continue
+  doubles=$(ls "$d" | sed -n -E 's/^((ENG|SCP|DA|ADR)-[0-9]{4}).*$/\1/p' | sort | uniq -d | tr '\n' ' ')
+  if [ -n "$doubles" ]; then
+    echo "[numbering-guard] $d: more than one record carries ${doubles}" >&2
+    echo "Two records under one number make every citation ambiguous. Renumber the one that exists in this clone only:" >&2
+    echo "  lean numero" >&2
+    echo "  lean renumeroter <record>" >&2
+    exit 1
+  fi
+done
+remote="$1"
+zero=0000000000000000000000000000000000000000
+dossiers='.lean-engine/orchestration/ENG .lean-engine/orchestration/SCP .lean-engine/orchestration/DA .lean-engine/orchestration/ADR .agenticLEAN/engagements .agenticLEAN/deltas .agenticLEAN/arbitrages .agenticLEAN/decisions agentic_orchestrator/management/engagements agentic_orchestrator/management/deltas agentic_orchestrator/management/arbitrages agentic_orchestrator/decisions'
+fichiers_claims='.lean-engine/orchestration/claims.yaml .agenticLEAN/claims.yaml agentic_orchestrator/management/claims.yaml'
+titre() { git show "$1" 2>/dev/null | sed -n -E -e 's/^titre: *"?([^"]*)"? *$/\1/p' -e 's/^# *(ENG|SCP|DA|ADR)-[0-9]{4}[^:]*: *(.*)$/\2/p' | head -n 1; }
+paires() { git show "$1" 2>/dev/null | awk '/^- domaine:/ { d = $3; gsub(/["\047]/, "", d) } /^ +eng:/ { e = $2; gsub(/["\047]/, "", e); print d " " e }'; }
+fautes=''
+while read -r lref lsha rref rsha; do
+  [ "$lsha" = "$zero" ] && continue
+  case "$rref" in refs/heads/*) ;; *) continue ;; esac
+  suivi="refs/remotes/$remote/${rref#refs/heads/}"
+  git rev-parse -q --verify "$suivi" >/dev/null || continue
+  for c in $(git rev-list --no-merges "$lsha" --not --remotes="$remote"); do
+    for d in $dossiers; do
+      for f in $(git diff-tree --no-commit-id --name-only -r --diff-filter=A "$c" -- "$d/"); do
+        id=$(basename "$f" | sed -n -E 's/^((ENG|SCP|DA|ADR)-[0-9]{4}).*$/\1/p')
+        [ -n "$id" ] || continue
+        for g in $(git ls-tree --name-only "$suivi" -- "$d/" | grep -E "/$id([.-]|$)"); do
+          ici=$(titre "$c:$f"); la=$(titre "$suivi:$g")
+          [ "$ici" = "$la" ] && continue
+          fautes="$fautes$id is carried by two records: here \"$ici\" ($f, commit $(git rev-parse --short "$c")), on $remote \"$la\" ($g)
+"
+        done
+      done
+    done
+    for cf in $fichiers_claims; do
+      git show "$c:$cf" 2>/dev/null | grep -qE '^mode: (chemins|aucune)' && continue
+      avant=$(paires "$c^:$cf")
+      la=$(paires "$suivi:$cf")
+      [ -n "$la" ] || continue
+      conflits=$(paires "$c:$cf" | while read -r dom eng; do
+        printf '%s\n' "$avant" | grep -qxF -- "$dom $eng" && continue
+        autre=$(printf '%s\n' "$la" | awk -v d="$dom" -v e="$eng" '$1 == d && $2 != e { print $2; exit }')
+        [ -n "$autre" ] && printf 'domain %s is claimed by two commitments: %s here, %s on %s\n' "$dom" "$eng" "$autre" "$remote"
+      done)
+      [ -n "$conflits" ] && fautes="$fautes$conflits
+"
+    done
+  done
+done
+if [ -n "$fautes" ]; then
+  printf '[divergence-guard] %s' "$fautes" >&2
+  echo "Another clone holds the same number or the same domain. Renumber the record of this clone" >&2
+  echo "(lean renumeroter <record>) or release the commitment that took the domain here, before you push." >&2
+  exit 1
+fi
+exit 0

@@ -1,0 +1,8 @@
+# Régimes de contrôle. Ils avertissent par défaut et ne bloquent que sur décision.
+fraicheur_bloquante: false
+collision_chemins_bloquante: false
+doc_bloquante: false
+mandat_ttl_minutes: 120
+ruptures_lignee_avant_da: 3
+langue_bloquante: false          # refuser une ecriture qui parait ne pas etre en anglais
+question_bloquante: true         # refuse a blocker report delivered with no option or no recommendation

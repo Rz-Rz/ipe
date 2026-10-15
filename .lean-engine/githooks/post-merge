@@ -1,0 +1,15 @@
+#!/bin/sh
+# Numbering guard (post-merge): one number, one record.
+# Placed by Lean Engine. PURE SH: no interpreter is required,
+# so the rule holds under Git for Windows and under WSL alike.
+for d in .lean-engine/orchestration/ENG .lean-engine/orchestration/SCP .lean-engine/orchestration/DA .lean-engine/orchestration/ADR; do
+  [ -d "$d" ] || continue
+  doubles=$(ls "$d" | sed -n -E 's/^((ENG|SCP|DA|ADR)-[0-9]{4}).*$/\1/p' | sort | uniq -d | tr '\n' ' ')
+  if [ -n "$doubles" ]; then
+    echo "[numbering-guard] $d: more than one record carries ${doubles}" >&2
+    echo "Two records under one number make every citation ambiguous. Renumber the one that exists in this clone only:" >&2
+    echo "  lean numero" >&2
+    echo "  lean renumeroter <record>" >&2
+  fi
+done
+exit 0

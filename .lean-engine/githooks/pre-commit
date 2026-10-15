@@ -1,0 +1,45 @@
+#!/bin/sh
+# Garde d'identite d'auteur et de lexique interdit (Constitution section 8).
+# Pose par Lean Engine. SH PUR : aucun interpreteur n'est requis,
+# pour que la regle vaille sous Git for Windows comme sous WSL.
+nom='Pierre-Thibault Fabre'
+mail='pierre-thibault@penrosetactical.com'
+f=anthr; f="${f}opic"
+o=cla; o="${o}ude"
+r=$(printf '\360\237\244\226')
+motif="($f)|(co-authored-by:[[:space:]]*$o)|(generated with \[?$o)|(assisted[- ]by:[[:space:]]*$o)|([[:alnum:]_.+-]*$o[[:alnum:]_.+-]*@[[:alnum:]_.-]*noreply)|(${r}[[:space:]]*generated)"
+liste='.lean-engine/identities'
+for qui in GIT_AUTHOR_IDENT GIT_COMMITTER_IDENT; do
+  ident=$(git var "$qui" 2>/dev/null) || continue
+  signe=${ident% * *}
+  if [ -s "$liste" ] && grep -v '^#' "$liste" | grep -q '<'; then
+    grep -v '^#' "$liste" | tr -d '\r' | grep -qxF -- "$signe" && continue
+  else
+    [ "$signe" = "$nom <$mail>" ] && continue
+  fi
+  echo "[identity-guard] identity refused ($qui): $signe" >&2
+  echo "This repository admits the identities listed in $liste, and no other." >&2
+  echo "To sign under your own name, ask for it to be admitted and set, in one gesture:" >&2
+  echo "  lean identite use \"Your Name\" you@example.org" >&2
+  exit 1
+done
+for d in .lean-engine/orchestration/ENG .lean-engine/orchestration/SCP .lean-engine/orchestration/DA .lean-engine/orchestration/ADR; do
+  [ -d "$d" ] || continue
+  doubles=$(ls "$d" | sed -n -E 's/^((ENG|SCP|DA|ADR)-[0-9]{4}).*$/\1/p' | sort | uniq -d | tr '\n' ' ')
+  if [ -n "$doubles" ]; then
+    echo "[numbering-guard] $d: more than one record carries ${doubles}" >&2
+    echo "Two records under one number make every citation ambiguous. Renumber the one that exists in this clone only:" >&2
+    echo "  lean numero" >&2
+    echo "  lean renumeroter <record>" >&2
+    exit 1
+  fi
+done
+git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r fichier; do
+  ligne=$(git diff --cached -U0 --no-color --no-textconv -- "$fichier" | grep '^+' | grep -v '^+++' | grep -iE -- "$motif" | head -n 1)
+  if [ -n "$ligne" ]; then
+    echo "[garde-identite] $fichier : une ligne ajoutee porte le lexique interdit (Constitution section 8)." >&2
+    echo "  $ligne" >&2
+    exit 1
+  fi
+done || exit 1
+exit 0
