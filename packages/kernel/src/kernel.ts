@@ -334,7 +334,9 @@ export class Kernel {
 
   private checkDependencies(objectId: ObjectId | null, dependsOn: ObjectId[]): void {
     for (const d of dependsOn) {
-      if (!this.objects.has(d)) throw new KernelError("unknown_dependency", `no object ${d} to depend on`);
+      const target = this.objects.get(d);
+      if (target === undefined) throw new KernelError("unknown_dependency", `no object ${d} to depend on`);
+      if (target.deleted) throw new KernelError("deleted_dependency", `object ${d} is deleted and cannot be depended on`);
       if (d === objectId) throw new KernelError("dependency_cycle", `${d} cannot depend on itself`);
     }
     if (objectId === null) return;
@@ -360,6 +362,11 @@ export class Kernel {
     if (!["author", "assistant", "import"].includes(input.origin)) throw new KernelError("invalid_input", `origin must be author, assistant or import`);
     if (typeof input.action !== "string" || input.action.length === 0) throw new KernelError("invalid_input", "action is required");
     if (typeof input.kind !== "string" || input.kind.length === 0) throw new KernelError("invalid_input", "kind is required");
+    if (input.origin === "author" && actor !== AUTHOR) {
+      const reason = `${actor} may not create an object of origin author: only the author does`;
+      await this.journal("refused", actor, "(none)", null, null, reason);
+      throw new KernelError("not_author", reason);
+    }
     const dependsOn = [...(input.dependsOn ?? [])];
     this.checkDependencies(null, dependsOn);
     const anchors = this.buildAnchors(input.anchors ?? []);
@@ -384,9 +391,10 @@ export class Kernel {
       stale: dependsOn.some((d) => this.objects.get(d)?.stale === true),
       deleted: false,
     };
+    if (this.objects.has(object.id)) throw new KernelError("duplicate_id", `the identifier adapter handed out ${object.id} twice`);
+    await this.journal("create", actor, object.id, null, object, null);
     this.objects.set(object.id, object);
     await this.persistObject(object);
-    await this.journal("create", actor, object.id, null, object, null);
     return clone(object);
   }
 
@@ -403,10 +411,10 @@ export class Kernel {
       next.anchors = this.buildAnchors(patch.anchors);
       next.version = this.versionIdForNewObjects();
     }
+    await this.journal("edit", actor, id, before, next, null);
     this.objects.set(id, next);
     this.recomputeStaleness();
     await this.persistTouched(new Set(this.objects.keys()));
-    await this.journal("edit", actor, id, before, this.objects.get(id) ?? next, null);
     return this.getObject(id);
   }
 
@@ -426,21 +434,24 @@ export class Kernel {
     }
     const before = clone(current);
     const now = this.clock.now();
-    current.provenance = { ...current.provenance, approval, approvedAt: now, approvedBy: actor };
-    await this.persistObject(current);
-    await this.journal(kind, actor, id, before, current, null);
-    return clone(current);
+    const next: IpeObject = { ...clone(current), provenance: { ...current.provenance, approval, approvedAt: now, approvedBy: actor } };
+    await this.journal(kind, actor, id, before, next, null);
+    this.objects.set(id, next);
+    await this.persistObject(next);
+    return clone(next);
   }
 
   /** A tombstone: the object stays, recoverable, out of the live counts. */
   async deleteObject(id: ObjectId, actor: string): Promise<void> {
     const current = this.live(id);
     const before = clone(current);
-    current.deleted = true;
-    await this.persistObject(current);
+    const next: IpeObject = { ...clone(current), deleted: true };
+    // The event first: a deletion whose history cannot be written is refused, never performed.
+    await this.journal("delete", actor, id, before, next, null);
+    this.objects.set(id, next);
+    await this.persistObject(next);
     this.recomputeStaleness();
     await this.persistTouched(new Set(this.objects.keys()));
-    await this.journal("delete", actor, id, before, current, null);
   }
 
   /** Restores the state an event replaced. Works across a close and a reopen: the journal is on disk. */
@@ -454,11 +465,11 @@ export class Kernel {
     if (current === undefined) throw new KernelError("unknown_object", `no object ${event.objectId}`);
     const snapshot = clone(current);
     const restored = clone(event.before);
+    await this.journal("undo", actor, restored.id, snapshot, restored, `undo of ${eventId}`);
     this.objects.set(restored.id, restored);
     this.reanchorObject(restored);
     this.recomputeStaleness();
     await this.persistTouched(new Set(this.objects.keys()));
-    await this.journal("undo", actor, restored.id, snapshot, this.objects.get(restored.id) ?? restored, `undo of ${eventId}`);
     return this.getObject(restored.id);
   }
 
@@ -469,11 +480,15 @@ export class Kernel {
       throw new KernelError("cannot_refresh", `object ${id} has an orphaned or ambiguous anchor: edit its anchors instead`);
     }
     const before = clone(current);
-    current.anchors = current.anchors.map((a) => makeAnchor(a.unit, this.readUnit(a.unit), a.start, a.end));
-    current.version = this.versionIdForNewObjects();
+    const next: IpeObject = {
+      ...clone(current),
+      anchors: current.anchors.map((a) => makeAnchor(a.unit, this.readUnit(a.unit), a.start, a.end)),
+      version: this.versionIdForNewObjects(),
+    };
+    await this.journal("refresh", actor, id, before, next, null);
+    this.objects.set(id, next);
     this.recomputeStaleness();
     await this.persistTouched(new Set(this.objects.keys()));
-    await this.journal("refresh", actor, id, before, this.objects.get(id) ?? current, null);
     return this.getObject(id);
   }
 
@@ -580,7 +595,7 @@ export class Kernel {
     const object = this.getObject(id);
     const anchors: ChainAnchor[] = object.anchors.map((a) => ({
       ...a,
-      passage: a.state === "orphaned" ? null : (this.texts.get(a.unit) ?? "").slice(a.start, a.end),
+      passage: a.state === "intact" || a.state === "changed" ? (this.texts.get(a.unit) ?? "").slice(a.start, a.end) : null,
     }));
     const version = this.history.find((v) => v.id === object.version) ?? null;
     const dependencies: IpeObject[] = [];
@@ -603,6 +618,7 @@ export class Kernel {
     const c: Counts = {
       total: 0, byKind: {}, proposed: 0, accepted: 0, rejected: 0, current: 0, stale: 0, anchored: 0,
       intact: 0, changed: 0, ambiguous: 0, orphaned: 0, deleted: 0,
+      anchorsByState: { intact: 0, changed: 0, ambiguous: 0, orphaned: 0 },
     };
     for (const o of this.objects.values()) {
       if (o.deleted) {
@@ -615,7 +631,8 @@ export class Kernel {
       if (o.stale) c.stale += 1;
       else c.current += 1;
       if (o.anchors.length > 0) c.anchored += 1;
-      for (const a of o.anchors) c[a.state] += 1;
+      for (const state of new Set(o.anchors.map((a) => a.state))) c[state] += 1;
+      for (const a of o.anchors) c.anchorsByState[a.state] += 1;
     }
     return c;
   }
@@ -662,10 +679,11 @@ export class Kernel {
 
   private async journal(kind: EventKind, actor: string, objectId: ObjectId, before: IpeObject | null, after: IpeObject | null, note: string | null): Promise<void> {
     const event: Event = { id: this.ids.next(), at: this.clock.now(), kind, actor, objectId, before: before === null ? null : clone(before), after: after === null ? null : clone(after), note };
-    this.events.push(event);
+    // The disk first: an event the history could not take is not an event.
     const line = JSON.stringify(event) + "\n";
     if (this.storage.append) await this.storage.append(JOURNAL, line);
     else await this.storage.write(JOURNAL, ((await this.storage.read(JOURNAL)) ?? "") + line);
+    this.events.push(event);
   }
 }
 

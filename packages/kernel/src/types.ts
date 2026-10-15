@@ -92,7 +92,7 @@ export interface Manifest {
 export interface Version {
   id: VersionId;
   at: string;
-  /** The action that produced it: create, write, external, add-unit, relocate-unit. */
+  /** The action that produced it: create, write, external, add-unit. A move, a rename or a relocation changes the manifest only. */
   action: string;
   units: Record<UnitId, string>;
 }
@@ -160,12 +160,14 @@ export interface Counts {
   stale: number;
   /** Live objects with at least one anchor. */
   anchored: number;
-  /** Anchors of live objects, by state. */
+  /** Live objects with at least one anchor in the state; an object counts once per state it carries. */
   intact: number;
   changed: number;
   ambiguous: number;
   orphaned: number;
   deleted: number;
+  /** Anchors of live objects, by state. */
+  anchorsByState: Record<AnchorState, number>;
 }
 
 export interface Hit {

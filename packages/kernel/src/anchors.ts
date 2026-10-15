@@ -67,26 +67,32 @@ function changedAt(anchor: Anchor, text: string, start: number, end: number): An
   return { ...anchor, start, end, before, after, state: "changed", candidates: [], current: text.slice(start, end) };
 }
 
-/** The shortest window still taken as evidence of a context, once the full one is gone. */
-const MIN_CONTEXT = 6;
+/** The shortest surviving part of a window still taken as evidence of a context. */
+const MIN_CONTEXT = 12;
+
+interface WindowHit {
+  at: number;
+  /** The whole window was found, not a surviving part of it. */
+  full: boolean;
+}
 
 /** Where the before-window ends in the text: the full window, else its longest surviving suffix. */
-function findBeforeEnds(text: string, before: string): number[] {
+function findBeforeEnds(text: string, before: string): WindowHit[] {
   const floor = Math.min(MIN_CONTEXT, before.length);
   for (let length = before.length; length >= floor && length > 0; length--) {
     const needle = before.slice(before.length - length);
     const found = findAll(text, needle);
-    if (found.length > 0) return found.map((p) => p + length);
+    if (found.length > 0) return found.map((p) => ({ at: p + length, full: length === before.length }));
   }
   return [];
 }
 
 /** Where the after-window starts in the text: the full window, else its longest surviving prefix. */
-function findAfterStarts(text: string, after: string): number[] {
+function findAfterStarts(text: string, after: string): WindowHit[] {
   const floor = Math.min(MIN_CONTEXT, after.length);
   for (let length = after.length; length >= floor && length > 0; length--) {
     const found = findAll(text, after.slice(0, length));
-    if (found.length > 0) return found;
+    if (found.length > 0) return found.map((p) => ({ at: p, full: length === after.length }));
   }
   return [];
 }
@@ -121,18 +127,28 @@ export function resolveAnchor(anchor: Anchor, unitText: string, others: UnitText
   }
 
   // The passage is not in its unit as recorded. Locate the edited region between its two
-  // context windows, each taken whole or by its longest surviving part; an empty window stands
-  // for the boundary of the unit. A change needs text between the windows: windows that touch,
-  // or overlap, mean the passage was removed here. An anchor that was already orphaned is not
-  // revived by context: text that appears where its passage stood is new text, not the passage.
-  // It comes back through its exact text only (a revert, or a move to another unit).
+  // context windows; an empty window stands for the boundary of the unit. A whole window counts
+  // wherever it stands. A surviving part of a window counts only when it is at least 12
+  // characters long, lies within two windows and one passage length of the original range, and
+  // keeps its order; the region between the parts may not exceed three passage lengths, or one
+  // passage plus two windows. Context locates an in-place rewrite; it never invents a match.
+  // A change needs text between the windows: windows that touch, or overlap, mean the passage
+  // was removed here. An anchor that was already orphaned is not revived by context: text that
+  // appears where its passage stood is new text, not the passage. It comes back through its
+  // exact text only (a revert, or a move to another unit).
   if (anchor.state !== "orphaned") {
-    const beforeEnds = anchor.before.length > 0 ? findBeforeEnds(unitText, anchor.before) : [0];
-    const afterStarts = anchor.after.length > 0 ? findAfterStarts(unitText, anchor.after) : [unitText.length];
+    const beforeEnds: WindowHit[] = anchor.before.length > 0 ? findBeforeEnds(unitText, anchor.before) : [{ at: 0, full: true }];
+    const afterStarts: WindowHit[] = anchor.after.length > 0 ? findAfterStarts(unitText, anchor.after) : [{ at: unitText.length, full: true }];
+    const near = 2 * CONTEXT + anchor.text.length;
+    const widest = Math.max(3 * anchor.text.length, anchor.text.length + 2 * CONTEXT);
     let best: { start: number; end: number } | null = null;
-    for (const s of beforeEnds) {
-      for (const e of afterStarts) {
+    for (const b of beforeEnds) {
+      for (const a of afterStarts) {
+        const s = b.at;
+        const e = a.at;
         if (e <= s) continue;
+        const partial = !(b.full && a.full);
+        if (partial && (Math.abs(s - anchor.start) > near || e - s > widest)) continue;
         const closer = best !== null && e - s === best.end - best.start && Math.abs(s - anchor.start) < Math.abs(best.start - anchor.start);
         if (best === null || e - s < best.end - best.start || closer) best = { start: s, end: e };
       }

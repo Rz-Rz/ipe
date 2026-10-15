@@ -1,6 +1,18 @@
 // SPEC-KER-007: Reversible object actions.
 import { describe, expect, it } from "vitest";
-import { Kernel } from "../src/index.js";
+import { JOURNAL, Kernel, MemoryStorage, SequenceIds, SteppingClock, objectPath } from "../src/index.js";
+
+/** A storage whose journal cannot be written: the history is unavailable. */
+class JournalUnwritable extends MemoryStorage {
+  override async append(path: string, text: string): Promise<void> {
+    if (path === JOURNAL) throw new Error("the journal cannot be written");
+    return super.append(path, text);
+  }
+  override async write(path: string, text: string): Promise<void> {
+    if (path === JOURNAL) throw new Error("the journal cannot be written");
+    return super.write(path, text);
+  }
+}
 import { noteOn, withUnit } from "./support/project.js";
 
 describe("SPEC-KER-007 Reversible object actions", () => {
@@ -48,5 +60,29 @@ describe("SPEC-KER-007 Reversible object actions", () => {
     expect(restored.deleted).toBe(false);
     expect(reopened.getObject(o.id)).toEqual(before);
     expect(reopened.listObjects().map((x) => x.id)).toContain(o.id);
+  });
+
+  it("TST-KER-007c: a deletion, an acceptance or an edit while the history cannot be written is refused, and the object is untouched", async () => {
+    const { kernel, storage, unit } = await withUnit("A passage and another passage.");
+    const o = await noteOn(kernel, unit.id, "A passage", { origin: "assistant" });
+    const unwritable = new JournalUnwritable();
+    for (const [path, text] of storage.files) unwritable.files.set(path, text);
+    const crippled = await Kernel.open({ storage: unwritable, clock: new SteppingClock(), ids: new SequenceIds("x") });
+    const fileBefore = unwritable.files.get(objectPath(o.id));
+    const eventsBefore = crippled.journalEvents().length;
+    await expect(crippled.deleteObject(o.id, "author")).rejects.toThrow("the journal cannot be written");
+    await expect(crippled.accept(o.id, "author")).rejects.toThrow("the journal cannot be written");
+    await expect(crippled.editObject(o.id, { title: "renamed" }, "author")).rejects.toThrow("the journal cannot be written");
+    expect(crippled.listObjects().map((x) => x.id)).toContain(o.id);
+    expect(crippled.getObject(o.id).deleted).toBe(false);
+    expect(crippled.getObject(o.id).title).toBe(o.title);
+    expect(crippled.getObject(o.id).provenance.approval).toBe("proposed");
+    expect(unwritable.files.get(objectPath(o.id))).toBe(fileBefore);
+    expect(crippled.journalEvents().length).toBe(eventsBefore);
+    const plain = new MemoryStorage();
+    for (const [path, text] of unwritable.files) plain.files.set(path, text);
+    const reopened = await Kernel.open({ storage: plain, clock: new SteppingClock(), ids: new SequenceIds("y") });
+    expect(reopened.getObject(o.id).deleted).toBe(false);
+    expect(reopened.journalEvents().filter((e) => e.kind === "delete")).toEqual([]);
   });
 });

@@ -24,5 +24,8 @@ describe("SPEC-KER-013 Dependencies between objects", () => {
     const o = await noteOn(kernel, unit.id, "passage");
     await expect(kernel.editObject(o.id, { dependsOn: ["ghost"] }, "author")).rejects.toMatchObject({ code: "unknown_dependency" });
     expect(kernel.listObjects()).toHaveLength(1);
+    const gone = await kernel.createObject({ kind: "fact", title: "gone", origin: "import", action: "import" }, "author");
+    await kernel.deleteObject(gone.id, "author");
+    await expect(kernel.editObject(o.id, { dependsOn: [gone.id] }, "author")).rejects.toMatchObject({ code: "deleted_dependency" });
   });
 });

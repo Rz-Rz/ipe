@@ -12,7 +12,7 @@ sans_impact : the design note already describes the provenance record (Section 2
 
 ## SPEC-KER-003
 
-impact : docs/KERNEL_DESIGN.md, Section 2: the anchor gains a field `current`, the passage a changed anchor covers now, null otherwise. Section 3: add two rules, a changed anchor follows the passage it currently covers across later edits, and an orphaned anchor returns only through its exact text (a revert in its unit, or a move to another unit), never through context; add that a context window that is no longer found is matched by its longest surviving part, down to 6 characters.
+impact : docs/KERNEL_DESIGN.md, Section 2: the anchor gains a field `current`, the passage a changed anchor covers now, null otherwise. Section 3, rule 5 becomes: a whole window counts wherever it stands; a surviving part of a window counts only when it is at least 12 characters long, lies within two windows and one passage length of the original range and keeps its order, with a region between the parts of at most three passage lengths or one passage plus two windows; context locates, it never invents a match. Add two rules: a changed anchor follows the passage it currently covers across later edits, and an orphaned anchor returns only through its exact text (a revert in its unit, or a move to another unit), never through context.
 
 ## SPEC-KER-004
 
@@ -44,4 +44,4 @@ sans_impact : the design note already describes dependencies (Section 4); the im
 
 ## SPEC-KER-014
 
-sans_impact : the counts are an inspection surface the design note lists in Section 7; nothing changes.
+impact : docs/KERNEL_DESIGN.md, Section 7: state that the counts by anchor state are counts of objects (an object counts once per state it carries), with the counts of anchors beside them.

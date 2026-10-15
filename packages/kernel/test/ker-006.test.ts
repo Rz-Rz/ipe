@@ -30,4 +30,17 @@ describe("SPEC-KER-006 Proposals and acceptance", () => {
     expect(refused.map((e) => e.actor)).toEqual(["assistant", "import-script"]);
     expect(refused[0]?.objectId).toBe(proposal.id);
   });
+
+  it("TST-KER-006c: an object of origin author is created by the author only; another actor is refused and recorded", async () => {
+    const { kernel, unit } = await withUnit("A sentence with a claim in it.");
+    const before = kernel.listObjects().length;
+    await expect(
+      kernel.createObject({ kind: "note", title: "x", origin: "author", action: "test", anchors: [{ unit: unit.id, start: 0, end: 10 }] }, "assistant"),
+    ).rejects.toMatchObject({ code: "not_author" });
+    expect(kernel.listObjects().length).toBe(before);
+    const refused = kernel.journalEvents().filter((e) => e.kind === "refused");
+    expect(refused.map((e) => e.actor)).toEqual(["assistant"]);
+    const own = await kernel.createObject({ kind: "note", title: "y", origin: "assistant", action: "test" }, "assistant");
+    expect(own.provenance.approval).toBe("proposed");
+  });
 });

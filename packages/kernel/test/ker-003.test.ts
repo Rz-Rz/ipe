@@ -66,6 +66,48 @@ describe("SPEC-KER-003 Anchors survive edits", () => {
     expect(reopened.openReport.anchorChanges.map((c) => c.objectId)).toContain(gone.id);
   });
 
+  it("TST-KER-003g: a passage that now occurs twice, told apart by nothing, is ambiguous with its candidates, and resolves when one copy goes", async () => {
+    const { kernel, unit } = await withUnit("alpha beta gamma delta");
+    const o = await noteOn(kernel, unit.id, "beta");
+    const result = await kernel.writeUnit(unit.id, "zeta beta beta delta");
+    const a = kernel.getObject(o.id).anchors[0];
+    expect(a?.state).toBe("ambiguous");
+    expect(a?.candidates).toEqual([
+      { unit: unit.id, start: 5, end: 9 },
+      { unit: unit.id, start: 10, end: 14 },
+    ]);
+    expect(a?.current).toBeNull();
+    expect(result.invalidated).toEqual([o.id]);
+    expect(result.anchorChanges).toEqual([{ objectId: o.id, index: 0, from: "intact", to: "ambiguous" }]);
+    expect(kernel.getObject(o.id).stale).toBe(true);
+    expect(kernel.counts().ambiguous).toBe(1);
+    expect(kernel.counts().anchorsByState.ambiguous).toBe(1);
+    expect(kernel.explain(o.id).anchors[0]?.passage).toBeNull();
+    await kernel.writeUnit(unit.id, "zeta beta delta");
+    const back = kernel.getObject(o.id).anchors[0];
+    expect(back?.state).toBe("intact");
+    expect(back?.start).toBe(5);
+    expect(kernel.getObject(o.id).stale).toBe(false);
+  });
+
+  it("TST-KER-003h: a passage deleted together with its neighbours stays orphaned, even when parts of its windows recur elsewhere", async () => {
+    const first = "The town slept under a thin rain, and the lamps along the quay guttered one by one.";
+    const passage = "Mara counted the boats twice before she trusted the number.";
+    const last = "The bell rang once more at the end of the watch, and nobody answered it.";
+    const { kernel, unit } = await withUnit(`${first} ${passage} ${last}`);
+    const o = await noteOn(kernel, unit.id, passage);
+    // The passage goes, both neighbours are rewritten, and parts of both windows (26 and 24
+    // characters, exact) recur far away with new text between them: a match there would be invented.
+    const rewritten = "Nothing of the quay remained in the morning light; the rain had stopped before dawn and the clerk filed the inventory without reading a line of it. "
+      + "The harbour master signed the ledger twice. Hours later, far from the water, someone remembered how the quay guttered one by one. Then silence. The bell rang once more, and then nothing.";
+    await kernel.writeUnit(unit.id, rewritten);
+    const a = kernel.getObject(o.id).anchors[0];
+    expect(rewritten.indexOf("quay guttered one by one. ") - (a?.start ?? 0)).toBeGreaterThan(150);
+    expect(a?.state).toBe("orphaned");
+    expect(a?.current).toBeNull();
+    expect(kernel.explain(o.id).anchors[0]?.passage).toBeNull();
+  });
+
   it("TST-KER-003f: for random edit scripts, every anchor is in the one state its edit history commands", async () => {
     const rnd = new Random(3);
     for (let round = 0; round < 25; round++) {
