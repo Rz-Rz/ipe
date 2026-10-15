@@ -7,7 +7,7 @@ Généré le 2026-10-15 par le coordinateur agentique. Ne pas éditer : toute co
 
 | Jalon | Exigences vertes | Engagements liés (tenus/total) | Chemin critique restant |
 |---|---|---|---|
-| J-KER | 0/20 | 1/3 | ENG-0002 -> ENG-0003 |
+| J-KER | 11/20 | 1/3 | ENG-0002 -> ENG-0003 |
 | J-PRV | 0/0 | 0/0 | (aucun) |
 | J-MEM | 0/0 | 0/0 | (aucun) |
 | J-SYS | 0/0 | 0/0 | (aucun) |
@@ -23,11 +23,11 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ### Frontière (prêt à tirer, trié par poids de déblocage)
 
-- ENG-0002 (débloque 1) : On-disk store with documented formats, external edits kept, consistent state after interruption
+- (vide)
 
 ### En vol
 
-- (aucun)
+- ENG-0002 : On-disk store with documented formats, external edits kept, consistent state after interruption ; promettant coordinator-session, réservé par Karim Dhrif <karimdhrif4444@gmail.com>, pris le 2026-10-15T18:11:05+00:00
 
 ### En attente ou gelés
 
@@ -39,17 +39,6 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ## 4. Anomalies
 
-- dérive spec : SPEC-KER-001 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-KER-002 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-KER-003 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-KER-004 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-KER-005 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-KER-006 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-KER-007 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-KER-010 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-KER-011 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-KER-013 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-KER-014 déclaré IMPLEMENTED par ENG-0001 (livraison vérifiée) mais PLANNED au dossier de recette
 - dette documentaire : SPEC-KER-003 (impact déclaré par ENG-0001, non résorbé)
 - dette documentaire : SPEC-KER-011 (impact déclaré par ENG-0001, non résorbé)
 - dette documentaire : SPEC-KER-014 (impact déclaré par ENG-0001, non résorbé)
