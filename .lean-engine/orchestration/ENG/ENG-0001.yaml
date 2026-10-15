@@ -1,0 +1,48 @@
+id: ENG-0001
+type: realisation
+titre: "Provenance kernel: objects, anchors, versions, staleness, invalidation, queries, on an in-memory store"
+promettant: null
+reserve_par: null
+pris_le: null
+restitue_le: null
+beneficiaire: "jalon:J-KER"
+exigences:
+  - SPEC-KER-001
+  - SPEC-KER-002
+  - SPEC-KER-003
+  - SPEC-KER-004
+  - SPEC-KER-005
+  - SPEC-KER-006
+  - SPEC-KER-007
+  - SPEC-KER-010
+  - SPEC-KER-011
+  - SPEC-KER-013
+  - SPEC-KER-014
+scope:
+  domaines:
+    - KER
+  paths:
+    - "packages/kernel/**"
+    - "package.json"
+    - "pnpm-workspace.yaml"
+    - "pnpm-lock.yaml"
+    - "tsconfig.base.json"
+    - "vitest.workspace.ts"
+    - ".gitignore"
+    - ".npmrc"
+definition_of_done: >
+  1. packages/kernel exists as a TypeScript package whose runtime code imports nothing from Node or the DOM; the workspace typecheck and test commands pass from the repository root.
+  2. Every planned test of the requirements of this commitment listed in dossier-recette/10_PROVENANCE_KERNEL.md (TST-KER-001a to TST-KER-014a, except those of KER-008, KER-009 and KER-012) exists under its name, runs on an in-memory storage adapter, and passes; the report names each test with its file and title.
+  3. The property tests draw their inputs at random and never use the kernel as their own oracle: a brute-force reference computes the invalidated set, an independent walk computes the counts.
+  4. REPORT.md opens with the result against this definition, names each requirement with the tests that prove it, and states what the coordinator can set to IMPLEMENTED.
+depends_on: []
+echeance: null
+readiness: []
+readiness_ok: true
+contrat: null
+statut: propose
+variance: null
+remplace_par: null
+notes: >
+  2026-10-15: drafted from the backlog by the coordinator. Design note: docs/KERNEL_DESIGN.md.
+  The on-disk store (KER-008, KER-009, KER-012) is ENG-0002; the interface (domain PRJ) is ENG-0003.

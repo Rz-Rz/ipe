@@ -1,0 +1,45 @@
+id: ENG-0003
+type: realisation
+titre: "Desktop application: project on disk, editing with save state, outline, search, Markdown round trip"
+promettant: null
+reserve_par: null
+pris_le: null
+restitue_le: null
+beneficiaire: "jalon:J-KER"
+exigences:
+  - SPEC-PRJ-001
+  - SPEC-PRJ-002
+  - SPEC-PRJ-003
+  - SPEC-PRJ-004
+  - SPEC-PRJ-005
+  - SPEC-PRJ-006
+scope:
+  domaines:
+    - PRJ
+  paths:
+    - "apps/desktop/**"
+    - "packages/kernel/**"
+    - "packages/adapters-node/**"
+    - "e2e/**"
+    - "playwright.config.ts"
+    - "package.json"
+    - "pnpm-lock.yaml"
+    - "pnpm-workspace.yaml"
+    - "vitest.workspace.ts"
+    - ".gitignore"
+definition_of_done: >
+  1. apps/desktop holds an Electron shell whose main process hosts the kernel on the Node adapters, and a React interface that imports no Node module and reaches the core through one typed channel, carried by Electron's message channel in the application and by a local HTTP bridge for tests.
+  2. The tests TST-PRJ-001a to TST-PRJ-006b exist under their names and pass: the interface tests run with Playwright against the interface served by Vite with the HTTP bridge, and a launch of the Electron application under the display of the machine is proven by a smoke test that opens a project and reads a unit.
+  3. A user can, in the running application: create and open a project folder, write in a unit with the save state visible, reorder units from the outline, search the project, and reopen a unit byte-identical; the report lists these gestures with the screenshots the tests captured.
+  4. REPORT.md opens with the result against this definition and names each requirement with the tests that prove it.
+depends_on:
+  - {eng: ENG-0002, type: finish-start}
+echeance: null
+readiness: []
+readiness_ok: true
+contrat: null
+statut: propose
+variance: null
+remplace_par: null
+notes: >
+  2026-10-15: drafted from the backlog by the coordinator. Design note: docs/KERNEL_DESIGN.md, Section 7.

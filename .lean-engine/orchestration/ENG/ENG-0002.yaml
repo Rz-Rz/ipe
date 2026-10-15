@@ -1,0 +1,37 @@
+id: ENG-0002
+type: realisation
+titre: "On-disk store with documented formats, external edits kept, consistent state after interruption"
+promettant: null
+reserve_par: null
+pris_le: null
+restitue_le: null
+beneficiaire: "jalon:J-KER"
+exigences:
+  - SPEC-KER-008
+  - SPEC-KER-009
+  - SPEC-KER-012
+scope:
+  domaines:
+    - KER
+  paths:
+    - "packages/kernel/**"
+    - "packages/adapters-node/**"
+    - "docs/FORMAT.md"
+    - "package.json"
+    - "pnpm-lock.yaml"
+    - "vitest.workspace.ts"
+definition_of_done: >
+  1. docs/FORMAT.md documents the on-disk layout of a project (manifest, Markdown units, .ipe/ objects, versions, blobs, journal, state) completely enough that an independent reader written from it alone reads a whole store.
+  2. packages/adapters-node implements the kernel's adapters on Node with atomic writes; the tests TST-KER-008a to TST-KER-008c, TST-KER-009a to TST-KER-009c and TST-KER-012a to TST-KER-012b exist under their names on temporary folders and pass, including the fault injection at each step of a write and the full-disk simulation.
+  3. REPORT.md opens with the result against this definition and names each requirement with the tests that prove it.
+depends_on:
+  - {eng: ENG-0001, type: finish-start}
+echeance: null
+readiness: []
+readiness_ok: true
+contrat: null
+statut: propose
+variance: null
+remplace_par: null
+notes: >
+  2026-10-15: drafted from the backlog by the coordinator. Design note: docs/KERNEL_DESIGN.md, Sections 5 and 6.
