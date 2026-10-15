@@ -1,0 +1,10 @@
+verdict: approve
+mandat: MAN-ENG-0001-3
+diff_empreinte: sha256:40d07350149c1bcbdd2166e09d19ff89409cf30c4eb505d60748b67035e92bac
+violations: []
+par_exigence: {"SPEC-KER-001":"couverte","SPEC-KER-002":"couverte","SPEC-KER-003":"couverte","SPEC-KER-004":"couverte","SPEC-KER-005":"couverte","SPEC-KER-006":"couverte","SPEC-KER-007":"couverte","SPEC-KER-010":"couverte","SPEC-KER-011":"couverte","SPEC-KER-013":"couverte","SPEC-KER-014":"couverte"}
+tests: {"executes":36,"verts":36,"non_verifiables":[]}
+tests_cites: ["tsc -p tsconfig.json && tsc -p tsconfig.test.json","vitest run"]
+motif_arbitrage: null
+mineur: false
+depose_le: '2026-10-15T18:08:46+00:00'

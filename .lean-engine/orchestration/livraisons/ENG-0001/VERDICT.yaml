@@ -1,10 +1,10 @@
-verdict: reject
-mandat: MAN-ENG-0001-2
-diff_empreinte: sha256:fc29a1c6996417e9f94122933ba0f3b158546f84011fdaa95f555959e32d485d
-violations: ["SPEC-KER-006 (only an author action changes the approval state; error case: an acceptance attempted by a non-author actor is refused and recorded): undo (packages/kernel/src/kernel.ts:458-474) applies no actor rule, so a non-author actor that undoes a reject event changes the object to accepted. Observed by probe on the delivered sources: an object accepted then rejected by the author, then undo(rejectEvent, 'assistant') is performed, the approval is accepted again, and the journal holds an undo event whose actor is the assistant; undo(acceptEvent, 'assistant') returns an accepted object to proposed. REPORT.md states under 'For information' that undo applies no actor rule; the requirement's exclusion makes the kernel the place of the actor rule in this milestone, and Constitution 6.6 forbids the coverage sentence of SPEC-KER-006 to say more than a named test proves. Correct in the same worktree: in undo, when the event's kind is accept or reject, refuse an actor other than the author with code not_author and a refused event recorded (as decide does, kernel.ts:431-434), leave the object untouched; add the case to ker-006.test.ts with its row in SPEC_UPDATE.md; restate the note of REPORT.md. The six marks V1 to V6 of MAN-ENG-0001-1 are answered in substance and are not reopened."]
-par_exigence: {"SPEC-KER-001":"couverte","SPEC-KER-002":"couverte","SPEC-KER-003":"couverte","SPEC-KER-004":"couverte","SPEC-KER-005":"couverte","SPEC-KER-006":"partielle","SPEC-KER-007":"couverte","SPEC-KER-010":"couverte","SPEC-KER-011":"couverte","SPEC-KER-013":"couverte","SPEC-KER-014":"couverte"}
-tests: {"executes":35,"verts":35,"non_verifiables":[]}
+verdict: approve
+mandat: MAN-ENG-0001-3
+diff_empreinte: sha256:40d07350149c1bcbdd2166e09d19ff89409cf30c4eb505d60748b67035e92bac
+violations: []
+par_exigence: {"SPEC-KER-001":"couverte","SPEC-KER-002":"couverte","SPEC-KER-003":"couverte","SPEC-KER-004":"couverte","SPEC-KER-005":"couverte","SPEC-KER-006":"couverte","SPEC-KER-007":"couverte","SPEC-KER-010":"couverte","SPEC-KER-011":"couverte","SPEC-KER-013":"couverte","SPEC-KER-014":"couverte"}
+tests: {"executes":36,"verts":36,"non_verifiables":[]}
 tests_cites: ["tsc -p tsconfig.json && tsc -p tsconfig.test.json","vitest run"]
 motif_arbitrage: null
-mineur: true
-depose_le: '2026-10-15T17:56:31+00:00'
+mineur: false
+depose_le: '2026-10-15T18:08:46+00:00'
