@@ -11707,7 +11707,22 @@ function publishTransaction(ctx, chemins, message, cause, options = {}) {
       fastForwardTrunk(ctx);
     } catch {
     }
-    const rels = [...new Set(chemins.filter(Boolean).map((c) => rel(ctx, c)))].filter((r) => r && !r.startsWith("..")).filter((r) => fs22.existsSync(path19.join(ctx.racine, r)) || git(["ls-files", "--", r], ctx.racine).stdout.trim() !== "");
+    const namesSomething = (r) => {
+      if (git(["ls-files", "--", r], ctx.racine).stdout.trim() !== "") return true;
+      const abs = path19.join(ctx.racine, r);
+      if (!fs22.existsSync(abs)) return false;
+      if (!fs22.statSync(abs).isDirectory()) return true;
+      const stack = [abs];
+      while (stack.length > 0) {
+        const d = stack.pop();
+        for (const e of fs22.readdirSync(d, { withFileTypes: true })) {
+          if (e.isFile()) return true;
+          if (e.isDirectory()) stack.push(path19.join(d, e.name));
+        }
+      }
+      return false;
+    };
+    const rels = [...new Set(chemins.filter(Boolean).map((c) => rel(ctx, c)))].filter((r) => r && !r.startsWith("..")).filter(namesSomething);
     let sha = null;
     const changes = rels.length ? git(["status", "--porcelain", "--", ...rels], ctx.racine).stdout.trim() : "";
     if (changes) {
@@ -13855,22 +13870,38 @@ var MARQUE_ESSAI = "[lean essai]";
 function enveloppesEssai(sorties) {
   const sortie = /* @__PURE__ */ new Map();
   let courante = null;
+  let armee = false;
+  let verrouillee = false;
   for (const ligne of sorties.split("\n")) {
+    if (ligne === `${MARQUE_ESSAI} run`) {
+      armee = true;
+      verrouillee = false;
+      courante = null;
+      continue;
+    }
     if (ligne.startsWith("$ ")) {
+      if (verrouillee) continue;
       courante = ligne.slice(2).trim();
+      if (armee) {
+        verrouillee = true;
+        armee = false;
+      }
       continue;
     }
     const m = ligne.match(/^\[lean essai\] exit (-?\d+), (\d+) ms/);
     if (m && courante !== null) {
       sortie.set(courante, { commande: courante, exit: Number(m[1]), ms: Number(m[2]) });
       courante = null;
+      verrouillee = false;
+      armee = false;
     }
   }
   return sortie;
 }
 function blocEssai(commande, texte, exit, ms) {
   const corps = texte.endsWith("\n") || !texte ? texte : texte + "\n";
-  return `$ ${commande}
+  return `${MARQUE_ESSAI} run
+$ ${commande}
 ${corps}${MARQUE_ESSAI} exit ${exit}, ${ms} ms, ${isoSecondes()}
 `;
 }
@@ -14912,10 +14943,10 @@ function brouillonEngagement(ctx, specIds, options = {}) {
     `exigences: [${ids.join(", ")}]`,
     "scope:",
     `  domaines: [${domaines2.join(", ")}]`,
-    "  paths: []             # \xC0 COMPL\xC9TER avant tirage (indices dans notes)",
+    "  paths: []             # TO COMPLETE before the pull (hints in notes)",
     "definition_of_done: >",
-    `  Les exigences ${ids.join(", ")} passent au statut IMPL\xC9MENT\xC9 (tests rattach\xE9s verts,`,
-    "  statuts mis \xE0 jour dans le dossier de recette par le coordinator, matrice r\xE9g\xE9n\xE9r\xE9e).",
+    `  The requirements ${ids.join(", ")} reach the status IMPLEMENTED: their attached tests are green,`,
+    "  the statuses are updated in the requirements folder by the coordinator, the matrix regenerated.",
     "echeance: null",
     "readiness: []",
     "readiness_ok: true",
@@ -14924,8 +14955,8 @@ function brouillonEngagement(ctx, specIds, options = {}) {
     "statut: propose",
     "variance: null",
     "notes: >",
-    "  Brouillon d\xE9pos\xE9 depuis le reste \xE0 faire du dossier de recette.",
-    `  Impl\xE9mentations d\xE9clar\xE9es (indices pour scope.paths) : ${implementations.join(" ; ")}`,
+    "  Draft filed from the remaining work of the requirements folder.",
+    `  Declared implementations (hints for scope.paths): ${implementations.join(" ; ")}`,
     ""
   ];
   const fichier = path26.join(ctx.engagements, `${eng}.yaml`);

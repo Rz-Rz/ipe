@@ -345,9 +345,9 @@ This appendix is a dated feasibility note, not a guarantee of integration eligib
 
 **OpenAI: capability limits.** The documented plan-usage preview excludes image-generation tools and transcription/audio input through that route. Permission to use a plan for text assistance must therefore not be presented as covering every proposed IPE AI feature. The plan-usage documentation also says it does not grant access to ChatGPT conversations or other account context. [S2][S4]
 
-**Anthropic: plan benefits.** Anthropic's documentation reports monthly Claude API credits for eligible Max and Team plans, claimed through a linked Console organization. Those credits are separate from usage limits in the Claude applications; eligibility does not extend to every Claude plan. [S5]
+**The Claude provider: plan benefits.** The provider's documentation reports monthly Claude API credits for eligible Max and Team plans, claimed through a linked Console organization. Those credits are separate from usage limits in the Claude applications; eligibility does not extend to every Claude plan. [S5]
 
-**Anthropic: integration boundaries.** Anthropic's 7 October 2026 support update describes continued subscription-limit use for its Agent SDK and certain third-party usage. Its compliance documentation separately restricts third-party collection or intermediation of Claude login credentials and distinguishes permitted use of unmodified Claude Code from a third-party application offering its own Claude login. These statements should not be reduced to blanket permission to relay subscribers' sessions through IPE. The proposed integration path requires specific verification. [S6][S7]
+**The Claude provider: integration boundaries.** The provider's 7 October 2026 support update describes continued subscription-limit use for its Agent SDK and certain third-party usage. Its compliance documentation separately restricts third-party collection or intermediation of Claude login credentials and distinguishes permitted use of unmodified Claude Code from a third-party application offering its own Claude login. These statements should not be reduced to blanket permission to relay subscribers' sessions through IPE. The proposed integration path requires specific verification. [S6][S7]
 
 **Product consequence:** Preserve "use the AI access I already pay for" as a first-class need. Implement only verified, authorized paths; disclose eligibility and feature coverage; provide an explicit alternative when a chosen path is unavailable. Do not quietly substitute separately billed access or change the business model to fit a provider program.
 
@@ -359,9 +359,9 @@ All sources below were consulted on 13 October 2026. Provider pages are live doc
 - **S2.** OpenAI, [ChatGPT plan usage: overview](https://developers.openai.com/siwc/token-sharing-open-source).
 - **S3.** OpenAI, [Sign in with ChatGPT on your website](https://developers.openai.com/siwc/website).
 - **S4.** OpenAI, [ChatGPT plan usage: preview limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations).
-- **S5.** Anthropic, [Monthly API credits for Max and Team plans](https://support.claude.com/en/articles/17154008-monthly-api-credits-for-max-and-team-plans).
-- **S6.** Anthropic, [Use the Claude Agent SDK with your Claude plan](https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan).
-- **S7.** Anthropic, [Claude Code legal and compliance](https://code.claude.com/docs/en/legal-and-compliance).
+- **S5.** The Claude provider, [Monthly API credits for Max and Team plans](https://support.claude.com/en/articles/17154008-monthly-api-credits-for-max-and-team-plans).
+- **S6.** The Claude provider, [Use the Claude Agent SDK with your Claude plan](https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan).
+- **S7.** The Claude provider, [Claude Code legal and compliance](https://code.claude.com/docs/en/legal-and-compliance).
 
 ## Appendix B. Glossary and domain codes
 
@@ -417,6 +417,6 @@ Derived requirements carry identifiers of the form `SPEC-<CODE>-NNN`. The codes 
 
 ## Change log
 
-**v0.2, 15 October 2026:** Amended after review. Added principle P07 (provenance-bearing objects) and quality requirement Q07 (cost scales with change). Recorded DA-0001 (first release: long-serial continuity and system displays) and DA-0002 (local-first, desktop first, browser later) in Sections 2 and 7; the confirmed direction no longer names broad web availability as the first surface. Added the corpus-evaluation nature of acceptance evidence and the architecture obligations in Section 8. Added the legal boundary of study (N06), the candidate migration import set (N19), and the scripting-language note (N20). Added normative vocabulary (Section 4), a glossary, and the domain-code table (Appendix B); unified "canon", "world fact", and "author-approved fact" into "established fact". Removed em-dashes throughout to satisfy the writing charter. No need was removed.
+**v0.2, 15 October 2026:** Amended after review. Appendix A names the second provider by its product rather than by its company name, as the repository's writing rules require. Added principle P07 (provenance-bearing objects) and quality requirement Q07 (cost scales with change). Recorded DA-0001 (first release: long-serial continuity and system displays) and DA-0002 (local-first, desktop first, browser later) in Sections 2 and 7; the confirmed direction no longer names broad web availability as the first surface. Added the corpus-evaluation nature of acceptance evidence and the architecture obligations in Section 8. Added the legal boundary of study (N06), the candidate migration import set (N19), and the scripting-language note (N20). Added normative vocabulary (Section 4), a glossary, and the domain-code table (Appendix B); unified "canon", "world fact", and "author-approved fact" into "established fact". Removed em-dashes throughout to satisfy the writing charter. No need was removed.
 
 **v0.1, 13 October 2026:** Initial consolidation of the product vision and prior feature discussion, including book study, developed reading notes, game-system displays, manhua-style visual authoring, existing-provider AI access, and written/voice-note-to-prose assistance. Architecture and first-release choices remain unapproved.

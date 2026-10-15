@@ -6,10 +6,10 @@ All requirements of this domain belong to milestone J-KER.
 
 ### SPEC-KER-001: Stable object identity
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-P07, IPE-P04
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`
 - Acceptance priority: critical
 
 **Requirement.** The kernel must assign every object an identifier that is unique within the project and that survives edits, moves, and renames of the manuscript units the object rests on.
@@ -18,16 +18,16 @@ All requirements of this domain belong to milestone J-KER.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-001a | planned | unit | After edit, move, and rename, each object keeps its identifier. |
-| TST-KER-001b | planned | unit | A store with two objects sharing an identifier is refused with both named. |
-| TST-KER-001c | planned | property | For random sequences of edits, moves, and renames, no identifier changes. |
+| TST-KER-001a | `packages/kernel/test/ker-001.test.ts` > SPEC-KER-001 Stable object identity > TST-KER-001a: after edit, move, and rename, each object keeps its identifier | unit | After edit, move, and rename, each object keeps its identifier. |
+| TST-KER-001b | `packages/kernel/test/ker-001.test.ts` > SPEC-KER-001 Stable object identity > TST-KER-001b: a store with two objects sharing an identifier is refused, with both files named | unit | A store with two objects sharing an identifier is refused with both named. |
+| TST-KER-001c | `packages/kernel/test/ker-001.test.ts` > SPEC-KER-001 Stable object identity > TST-KER-001c: for random sequences of edits, moves, renames and relocations, no identifier changes | property | For random sequences of edits, moves, and renames, no identifier changes. |
 
 ### SPEC-KER-002: Provenance record
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-P07, IPE-P02
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`, `packages/kernel/src/layout.ts`
 - Acceptance priority: critical
 
 **Requirement.** The kernel must record for every object its origin (author, assistant, or import), the action that created it, the creation time, the manuscript version it rests on, its anchors, and its approval state.
@@ -36,36 +36,38 @@ All requirements of this domain belong to milestone J-KER.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-002a | planned | unit | Every stored object exposes the six provenance fields. |
-| TST-KER-002b | planned | unit | A write without origin, or without approval state, is refused. |
+| TST-KER-002a | `packages/kernel/test/ker-002.test.ts` > SPEC-KER-002 Provenance record > TST-KER-002a: every stored object exposes origin, action, creation time, version, anchors and approval state | unit | Every stored object exposes the six provenance fields. |
+| TST-KER-002b | `packages/kernel/test/ker-002.test.ts` > SPEC-KER-002 Provenance record > TST-KER-002b: a write without origin, or without approval state, is refused | unit | A write without origin, or without approval state, is refused. |
 
 ### SPEC-KER-003: Anchors survive edits
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-N01, IPE-P07
-- Implementation: none
+- Implementation: `packages/kernel/src/anchors.ts`, `packages/kernel/src/kernel.ts`
 - Acceptance priority: critical
 
 **Requirement.** An anchor must continue to designate its passage after edits elsewhere in the manuscript unit and after the passage moves to another manuscript unit, and must enter the orphaned state, never disappear, when the passage is deleted.
 
-**Coverage.** Nominal: insertions and deletions before and after the passage leave the anchor intact. Limit: an edit inside the passage keeps the anchor and marks it changed; a passage cut and pasted whole into another unit is re-anchored by content identity. Error: the passage is deleted; the anchor is orphaned, the object is kept, and the orphaned state is visible in every query. Degraded: the unit was edited outside the product; at reopen the kernel re-anchors by content match, else marks the anchor orphaned. Exclusion: re-anchoring does not choose among several identical candidate passages; it marks the anchor ambiguous and lists the candidates.
+**Coverage.** Nominal: insertions and deletions before and after the passage leave the anchor intact. Limit: an edit inside the passage keeps the anchor and marks it changed; a passage cut and pasted whole into another unit is re-anchored by content identity. Error: the passage is deleted; the anchor is orphaned, the object is kept, and the orphaned state is visible in every query. Degraded: the unit was edited outside the product; at reopen the kernel re-anchors by content match, else marks the anchor orphaned. Exclusion: re-anchoring does not choose among several identical candidate passages; it marks the anchor ambiguous and lists the candidates; the object is invalidated and stale until one copy goes or the author re-anchors it. A passage rewritten so that neither of its context windows survives whole, and no part of at least 12 characters of a window survives near the original range in order, is reported orphaned, not changed; the author re-anchors the object. When both whole windows recur elsewhere with new text between them, the anchor follows them as changed. An orphaned anchor returns only through its exact text: a revert in its unit, or a move to another unit.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-003a | planned | unit | Edits around the passage leave the anchor intact. |
-| TST-KER-003b | planned | unit | An edit inside the passage yields state changed. |
-| TST-KER-003c | planned | unit | A whole passage moved to another unit is re-anchored there. |
-| TST-KER-003d | planned | unit | A deleted passage yields state orphaned; the object remains. |
-| TST-KER-003e | planned | integration | An external edit yields re-anchoring or orphaned, never a lost object. |
-| TST-KER-003f | planned | property | For random edit scripts, every anchor is in exactly one of the states intact, changed, ambiguous, orphaned. |
+| TST-KER-003a | `packages/kernel/test/ker-003.test.ts` > SPEC-KER-003 Anchors survive edits > TST-KER-003a: edits around the passage leave the anchor intact, at its new position | unit | Edits around the passage leave the anchor intact. |
+| TST-KER-003b | `packages/kernel/test/ker-003.test.ts` > SPEC-KER-003 Anchors survive edits > TST-KER-003b: an edit inside the passage yields state changed, and the text the object rests on is kept | unit | An edit inside the passage yields state changed. |
+| TST-KER-003c | `packages/kernel/test/ker-003.test.ts` > SPEC-KER-003 Anchors survive edits > TST-KER-003c: a whole passage moved to another unit is re-anchored there | unit | A whole passage moved to another unit is re-anchored there. |
+| TST-KER-003d | `packages/kernel/test/ker-003.test.ts` > SPEC-KER-003 Anchors survive edits > TST-KER-003d: a deleted passage yields state orphaned; the object remains and says so | unit | A deleted passage yields state orphaned; the object remains. |
+| TST-KER-003e | `packages/kernel/test/ker-003.test.ts` > SPEC-KER-003 Anchors survive edits > TST-KER-003e: an edit made outside the product yields re-anchoring or orphaned, never a lost object | integration | An external edit yields re-anchoring or orphaned, never a lost object. |
+| TST-KER-003f | `packages/kernel/test/ker-003.test.ts` > SPEC-KER-003 Anchors survive edits > TST-KER-003f: for random edit scripts, every anchor is in the one state its edit history commands | property | For random edit scripts, every anchor is in exactly one of the states intact, changed, ambiguous, orphaned. |
+| TST-KER-003g | `packages/kernel/test/ker-003.test.ts` > SPEC-KER-003 Anchors survive edits > TST-KER-003g: a passage that now occurs twice, told apart by nothing, is ambiguous with its candidates, and resolves when one copy goes | unit | Two identical candidates told apart by nothing: ambiguous with both candidates listed, the object invalidated and stale, no passage in the chain, intact again when one copy goes. |
+| TST-KER-003h | `packages/kernel/test/ker-003.test.ts` > SPEC-KER-003 Anchors survive edits > TST-KER-003h: a passage deleted together with its neighbours stays orphaned, even when parts of its windows recur elsewhere | unit | A passage deleted with both neighbours rewritten, parts of its windows recurring far away: orphaned, with no current passage. |
 
 ### SPEC-KER-004: Manuscript versions
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-P04, IPE-N17
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`
 - Acceptance priority: critical
 
 **Requirement.** The kernel must record manuscript versions such that any earlier version of any manuscript unit is recoverable, and every object must name the version it rests on.
@@ -74,16 +76,16 @@ All requirements of this domain belong to milestone J-KER.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-004a | planned | unit | Any earlier version of a unit is recovered byte for byte. |
-| TST-KER-004b | planned | unit | An object naming a missing version is reported unverifiable and kept. |
-| TST-KER-004c | planned | system | A project with corrupted history opens with its current text editable. |
+| TST-KER-004a | `packages/kernel/test/ker-004.test.ts` > SPEC-KER-004 Manuscript versions > TST-KER-004a: any earlier version of a unit is recovered byte for byte | unit | Any earlier version of a unit is recovered byte for byte. |
+| TST-KER-004b | `packages/kernel/test/ker-004.test.ts` > SPEC-KER-004 Manuscript versions > TST-KER-004b: an object naming a missing version is reported unverifiable and kept | unit | An object naming a missing version is reported unverifiable and kept. |
+| TST-KER-004c | `packages/kernel/test/ker-004.test.ts` > SPEC-KER-004 Manuscript versions > TST-KER-004c: a project with corrupted history opens with its current text editable | system | A project with corrupted history opens with its current text editable. |
 
 ### SPEC-KER-005: Staleness
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-P07, IPE-N09
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`
 - Acceptance priority: critical
 
 **Requirement.** The kernel must mark an object stale when any passage it rests on, or any object it depends on, changed after the version the object names, and must present stale objects with that marker in every query and view.
@@ -92,44 +94,47 @@ All requirements of this domain belong to milestone J-KER.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-005a | planned | unit | Editing an anchored passage marks the object stale. |
-| TST-KER-005b | planned | unit | Staleness propagates to dependent objects, transitively. |
-| TST-KER-005c | planned | unit | Reverting to identical text returns the object to current. |
-| TST-KER-005d | planned | property | No sequence of operations makes a stale object current without identical content or an explicit re-evaluation. |
+| TST-KER-005a | `packages/kernel/test/ker-005.test.ts` > SPEC-KER-005 Staleness > TST-KER-005a: editing an anchored passage marks the object stale | unit | Editing an anchored passage marks the object stale. |
+| TST-KER-005b | `packages/kernel/test/ker-005.test.ts` > SPEC-KER-005 Staleness > TST-KER-005b: staleness propagates to dependent objects, transitively | unit | Staleness propagates to dependent objects, transitively. |
+| TST-KER-005c | `packages/kernel/test/ker-005.test.ts` > SPEC-KER-005 Staleness > TST-KER-005c: reverting to identical text returns the object, and its dependents, to current | unit | Reverting to identical text returns the object to current. |
+| TST-KER-005d | `packages/kernel/test/ker-005.test.ts` > SPEC-KER-005 Staleness > TST-KER-005d: no sequence of operations makes a stale object current without identical content or an explicit re-evaluation | property | No sequence of operations makes a stale object current without identical content or an explicit re-evaluation. |
 
 ### SPEC-KER-006: Proposals and acceptance
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-P01, IPE-P07
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`
 - Acceptance priority: critical
 
 **Requirement.** An object created by the assistant or by an import must enter the project as a proposal, and only an author action must change it to accepted or rejected.
 
-**Coverage.** Nominal: a proposal becomes accepted or rejected by one author action, recorded with its time. Limit: the author accepts several proposals in one action; each change is recorded. Error: an actor that is not the author attempts to accept; the attempt is refused and recorded. Degraded: none. Exclusion: this milestone has no assistant; the kernel exposes the states and the actor rule, tested with simulated actors.
+**Coverage.** Nominal: a proposal becomes accepted or rejected by one author action, recorded with its time. Limit: the author accepts several proposals in one action; each change is recorded. Error: an actor that is not the author attempts to accept, to create an object of origin author, or to undo a decision in a way that would change the approval state; the attempt is refused with not_author and recorded. Degraded: none. Exclusion: this milestone has no assistant; the kernel exposes the states and the actor rule, tested with simulated actors.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-006a | planned | unit | Objects of origin assistant or import are stored as proposals. |
-| TST-KER-006b | planned | unit | An acceptance by a non-author actor is refused and recorded. |
+| TST-KER-006a | `packages/kernel/test/ker-006.test.ts` > SPEC-KER-006 Proposals and acceptance > TST-KER-006a: objects of origin assistant or import are stored as proposals; the author's are accepted | unit | Objects of origin assistant or import are stored as proposals. |
+| TST-KER-006b | `packages/kernel/test/ker-006.test.ts` > SPEC-KER-006 Proposals and acceptance > TST-KER-006b: an acceptance by a non-author actor is refused and recorded | unit | An acceptance by a non-author actor is refused and recorded. |
+| TST-KER-006c | `packages/kernel/test/ker-006.test.ts` > SPEC-KER-006 Proposals and acceptance > TST-KER-006c: an object of origin author is created by the author only; another actor is refused and recorded | unit | An object of origin author created by another actor is refused with not_author, the refusal is recorded, nothing is created. |
+| TST-KER-006d | `packages/kernel/test/ker-006.test.ts` > SPEC-KER-006 Proposals and acceptance > TST-KER-006d: an undo that would change the approval state is the author's only; another actor is refused and recorded | unit | An undo that would change the approval state, attempted by another actor, is refused with not_author and recorded; the author's undo restores the state; an undo that leaves the approval state stays open to the actor. |
 
 ### SPEC-KER-007: Reversible object actions
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-P04
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`
 - Acceptance priority: major
 
 **Requirement.** Accepting, rejecting, editing, and deleting an object must be undoable, and the previous state must be recoverable after the product is closed and reopened.
 
-**Coverage.** Nominal: undo within the session restores the previous state. Limit: undo after close and reopen restores it as well. Error: none. Degraded: a deletion requested while the history cannot be written is refused with a message, never performed silently. Exclusion: a permanent purge is a separate explicit action, recorded.
+**Coverage.** Nominal: undo within the session restores the previous state. Limit: undo after close and reopen restores it as well. Error: none. Degraded: a deletion, an acceptance or an edit requested while the history cannot be written is refused with a message, never performed; the event is written before the object, so the object is untouched. Exclusion: a permanent purge is a separate explicit action, recorded.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-007a | planned | unit | Each of the four actions is undone to the exact previous state. |
-| TST-KER-007b | planned | system | After close and reopen, the previous state is still recoverable. |
+| TST-KER-007a | `packages/kernel/test/ker-007.test.ts` > SPEC-KER-007 Reversible object actions > TST-KER-007a: each of the four actions is undone to the exact previous state | unit | Each of the four actions is undone to the exact previous state. |
+| TST-KER-007b | `packages/kernel/test/ker-007.test.ts` > SPEC-KER-007 Reversible object actions > TST-KER-007b: after close and reopen, the previous state is still recoverable | system | After close and reopen, the previous state is still recoverable. |
+| TST-KER-007c | `packages/kernel/test/ker-007.test.ts` > SPEC-KER-007 Reversible object actions > TST-KER-007c: a deletion, an acceptance or an edit while the history cannot be written is refused, and the object is untouched | unit | With a history that cannot be written, a deletion, an acceptance and an edit are refused; the object file is byte-identical and no event exists, before and after a reopen. |
 
 ### SPEC-KER-008: Documented on-disk formats
 
@@ -169,10 +174,10 @@ All requirements of this domain belong to milestone J-KER.
 
 ### SPEC-KER-010: Provenance query
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-N09, IPE-P07
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`
 - Acceptance priority: critical
 
 **Requirement.** The kernel must answer, for any object, a query that returns its provenance chain: its anchors with their passages and states, the version it rests on, its origin and creating action, its approval state, its staleness, and the objects it depends on, transitively.
@@ -181,25 +186,25 @@ All requirements of this domain belong to milestone J-KER.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-010a | planned | unit | The chain lists every anchor, the version, origin, action, state, staleness, and transitive dependencies. |
-| TST-KER-010b | planned | unit | A write that would create a dependency cycle is refused. |
+| TST-KER-010a | `packages/kernel/test/ker-010.test.ts` > SPEC-KER-010 Provenance query > TST-KER-010a: the chain lists every anchor with its passage, the version, origin, action, state, staleness and transitive dependencies | unit | The chain lists every anchor, the version, origin, action, state, staleness, and transitive dependencies. |
+| TST-KER-010b | `packages/kernel/test/ker-010.test.ts` > SPEC-KER-010 Provenance query > TST-KER-010b: a write that would create a dependency cycle is refused | unit | A write that would create a dependency cycle is refused. |
 
 ### SPEC-KER-011: Incremental invalidation
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-Q07
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`
 - Acceptance priority: critical
 
 **Requirement.** After an edit, the kernel must identify as needing re-evaluation exactly the objects whose anchors or dependencies were affected by that edit, and must leave every other object untouched.
 
-**Coverage.** Nominal: an edit of one passage invalidates the objects anchored to it and their dependents, and nothing else. Limit: an edit touching many passages invalidates each affected object once. Error: none. Degraded: when an anchor is ambiguous, the kernel includes the ambiguous objects and says so. Exclusion: re-evaluation itself is performed by views and by the assistant, not by the kernel.
+**Coverage.** Nominal: an edit of one passage invalidates the objects anchored to it and their dependents, and nothing else; an object anchored in the edited unit whose anchor stays intact may have its context windows refreshed on disk, and is neither invalidated nor stale; byte-identity is asserted for objects anchored elsewhere. Limit: an edit touching many passages invalidates each affected object once; an anchor already non-intact that degrades further does not invalidate its object again. Error: none. Degraded: when an anchor is ambiguous, the kernel includes the ambiguous objects and says so. Exclusion: re-evaluation itself is performed by views and by the assistant, not by the kernel.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-011a | planned | unit | The invalidated set equals the affected objects; unaffected objects are byte-identical before and after. |
-| TST-KER-011b | planned | property | For random edits, the invalidated set equals the set computed by brute force over anchors and dependencies. |
+| TST-KER-011a | `packages/kernel/test/ker-011.test.ts` > SPEC-KER-011 Incremental invalidation > TST-KER-011a: the invalidated set equals the affected objects; unaffected objects are byte-identical before and after | unit | The invalidated set equals the affected objects; unaffected objects are byte-identical before and after. |
+| TST-KER-011b | `packages/kernel/test/ker-011.test.ts` > SPEC-KER-011 Incremental invalidation > TST-KER-011b: for random edits, the invalidated set equals the set a brute-force reference computes from what the edit touched | property | For random edits, the invalidated set equals the set computed by brute force over anchors and dependencies. |
 
 ### SPEC-KER-012: Consistent state after interruption
 
@@ -220,10 +225,10 @@ All requirements of this domain belong to milestone J-KER.
 
 ### SPEC-KER-013: Dependencies between objects
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-P07, IPE-N17
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`
 - Acceptance priority: major
 
 **Requirement.** An object may declare dependencies on other objects, and the kernel must record them so that staleness and invalidation propagate along them.
@@ -232,21 +237,21 @@ All requirements of this domain belong to milestone J-KER.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-013a | planned | unit | A recorded dependency appears in the provenance query and propagates staleness. |
-| TST-KER-013b | planned | unit | A dependency on an unknown object is refused. |
+| TST-KER-013a | `packages/kernel/test/ker-013.test.ts` > SPEC-KER-013 Dependencies between objects > TST-KER-013a: a recorded dependency appears in the provenance query and propagates staleness and invalidation | unit | A recorded dependency appears in the provenance query and propagates staleness. |
+| TST-KER-013b | `packages/kernel/test/ker-013.test.ts` > SPEC-KER-013 Dependencies between objects > TST-KER-013b: a dependency on an unknown object is refused | unit | A dependency on an unknown object is refused. |
 
 ### SPEC-KER-014: Kernel inspection
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-N09, IPE-Q02
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`
 - Acceptance priority: minor
 
 **Requirement.** The kernel must report on request the count of objects by kind and by state: proposal, accepted, rejected; current, stale; anchored, orphaned, ambiguous.
 
-**Coverage.** Nominal: the counts match the store. Limit: an empty project reports zero in every category. Error: none. Degraded: none. Exclusion: presentation of the report belongs to domain PRJ or ENV.
+**Coverage.** Nominal: the counts match the store; the counts by state (intact, changed, ambiguous, orphaned) are counts of live objects, an object counting once per state it carries, and the counts of anchors by state stand beside them. Limit: an empty project reports zero in every category. Error: none. Degraded: none. Exclusion: presentation of the report belongs to domain PRJ or ENV.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-014a | planned | unit | The reported counts equal the counts computed from the store by an independent walk. |
+| TST-KER-014a | `packages/kernel/test/ker-014.test.ts` > SPEC-KER-014 Kernel inspection > TST-KER-014a: the reported counts equal the counts computed from the store by an independent walk | unit | The reported counts equal the counts computed from the store by an independent walk. |

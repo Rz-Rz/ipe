@@ -18,7 +18,7 @@ The interface reaches the kernel through one typed interface, `IpeApi`, carried 
 - **Manuscript unit**: one Markdown file. Identified by its manifest identifier, never by its path.
 - **Object**: `{ id, kind, title, body, anchors, dependsOn, provenance, version, stale, deleted }`. `kind` is a short string owned by the domain that creates it (`note`, `fact`, later `display`, `check`). `body` is JSON owned by that domain. `version` is the manuscript version the object rests on.
 - **Provenance**: `{ origin: author | assistant | import, action, createdAt, approval: proposed | accepted | rejected, approvedAt }`.
-- **Anchor**: `{ unit, start, end, text, before, after, state, candidates }`. `text` is the exact passage; `before` and `after` are short context windows. `state` is one of intact, changed, ambiguous, orphaned.
+- **Anchor**: `{ unit, start, end, text, before, after, state, candidates, current }`. `text` is the exact passage the object rests on, never updated by re-resolution; `before` and `after` are short context windows; `state` is one of intact, changed, ambiguous, orphaned; `current` is, for a changed anchor, the passage its range covers now, null otherwise.
 - **Version**: `{ id, at, units: { unitId: contentHash } }`. Unit contents are stored content-addressed under `.ipe/versions/blobs/<hash>`, so any earlier state of any unit is recoverable and identical content is stored once.
 - **Event**: every change to an object appends `{ at, kind, objectId, before, after }` to `.ipe/journal.jsonl`; undo replays `before`. Deletion is a tombstone (`deleted: true`), never a removal; a purge is a separate explicit action.
 
@@ -30,13 +30,15 @@ When a unit's text changes, from the editor or from the disk, the kernel re-reso
 2. If the mapped range holds the same `text`: intact (the passage may have moved inside the unit).
 3. If the range survived with edits inside it: changed, with the new range.
 4. If the range was deleted: search the exact `text` in every unit of the project. One match: intact, re-anchored to that unit. Several matches: ambiguous, with the candidates listed. No match: orphaned.
-5. Context (`before`, `after`) breaks ties among identical passages; it never invents a match.
+5. Context (`before`, `after`) breaks ties among identical passages and locates an in-place rewrite: a whole window counts wherever it stands; a surviving part of a window counts only when it is at least 12 characters long, lies within two windows and one passage length of the original range and keeps its order, with a region between the parts of at most three passage lengths or one passage plus two windows. Context locates; it never invents a match.
+6. A changed anchor follows the passage it currently covers (`current`) across later edits, still changed against the text it rests on.
+7. An orphaned anchor returns only through its exact text: a revert in its unit, or a move to another unit found once. Text that appears where its passage stood is new text, not the passage.
 
 An anchor is never deleted by the kernel. The object keeps it, in its state, until the author acts.
 
 ## 4. Staleness and invalidation (SPEC-KER-005, SPEC-KER-011, SPEC-KER-013)
 
-After a batch of unit changes, the kernel re-resolves anchors, then marks stale every object with an anchor in state changed, ambiguous or orphaned, and propagates staleness along `dependsOn` transitively. The set of objects marked, plus the dependents, is the invalidated set the kernel returns; every other object file is untouched, byte for byte. An object becomes current again when its domain re-evaluates it and records the new version, or when its anchors are all intact again with the text identical to the one the object rests on.
+After a batch of unit changes, the kernel re-resolves anchors, then marks stale every object with an anchor in state changed, ambiguous or orphaned, and propagates staleness along `dependsOn` transitively. The invalidated set the kernel returns is seeded by the anchors that go from intact to a non-intact state in the edit, plus their transitive dependents; an anchor already non-intact that degrades further does not invalidate its object again. An object anchored in the edited unit whose anchor stays intact is neither invalidated nor stale, though its context windows may be refreshed on disk; an object anchored elsewhere is untouched, byte for byte. An object becomes current again when its domain re-evaluates it and records the new version, or when its anchors are all intact again with the text identical to the one the object rests on.
 
 ## 5. On-disk layout (SPEC-KER-008, documented format)
 
@@ -78,7 +80,7 @@ interface IpeApi {
   search(term): Promise<Hit[]>;
   objects(filter?): Promise<ObjectSummary[]>;
   explain(objectId): Promise<ProvenanceChain>;
-  counts(): Promise<Counts>;
+  counts(): Promise<Counts>;           // counts by anchor state are counts of objects; anchor counts stand beside
   accept(objectId) / reject(objectId) / undo(eventId)
 }
 ```

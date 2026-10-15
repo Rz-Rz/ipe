@@ -1,7 +1,7 @@
 # Constitution of IPE
 
 ```
-version: 1.0
+version: 1.1
 date: 2026-10-15
 ```
 
@@ -34,7 +34,7 @@ IPE, the Integrated Publishing Environment, is a local-first writing environment
 |---|---|---|
 | Operator (Karim Dhrif) | Human | Everything; the only decider of arbitrations |
 | Coordinator | Main interactive session | Everything but generated files; the only agent allowed on the state tree |
-| Implementor | A live session that pulled a commitment (`eng pull`), one worktree per commitment | Only the scope of its commitment, plus `REPORT.md`, `BLOCKED.md` and `.eng/` |
+| Implementor | A live session that pulled a commitment (`eng pull`), one worktree per commitment | Only the scope of its commitment, plus the delivery artefacts at the worktree root (`REPORT.md`, `SPEC_UPDATE.md`, `DOC_UPDATE.md`, `BLOCKED.md`) and `.eng/` |
 | Verifier | Headless read-only session, plus test execution | Nothing |
 
 An implementor never settles a question that touches requirements, milestones or this constitution: it writes a `BLOCKED.md` (finding, nature of the block, draft SCP or DA) and ends its session.

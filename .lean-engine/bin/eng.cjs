@@ -11106,7 +11106,22 @@ function publishTransaction(ctx, chemins, message, cause, options = {}) {
       fastForwardTrunk(ctx);
     } catch {
     }
-    const rels = [...new Set(chemins.filter(Boolean).map((c) => rel(ctx, c)))].filter((r) => r && !r.startsWith("..")).filter((r) => fs20.existsSync(path18.join(ctx.racine, r)) || git(["ls-files", "--", r], ctx.racine).stdout.trim() !== "");
+    const namesSomething = (r) => {
+      if (git(["ls-files", "--", r], ctx.racine).stdout.trim() !== "") return true;
+      const abs = path18.join(ctx.racine, r);
+      if (!fs20.existsSync(abs)) return false;
+      if (!fs20.statSync(abs).isDirectory()) return true;
+      const stack = [abs];
+      while (stack.length > 0) {
+        const d = stack.pop();
+        for (const e of fs20.readdirSync(d, { withFileTypes: true })) {
+          if (e.isFile()) return true;
+          if (e.isDirectory()) stack.push(path18.join(d, e.name));
+        }
+      }
+      return false;
+    };
+    const rels = [...new Set(chemins.filter(Boolean).map((c) => rel(ctx, c)))].filter((r) => r && !r.startsWith("..")).filter(namesSomething);
     let sha = null;
     const changes = rels.length ? git(["status", "--porcelain", "--", ...rels], ctx.racine).stdout.trim() : "";
     if (changes) {
