@@ -7432,6 +7432,7 @@ function resoudreContexte(racine) {
   }
   const { disposition, etat } = e;
   const gouvernance2 = path.join(abs, "agentic_orchestrator");
+  const constitution = [path.join(abs, "CONSTITUTION.md"), path.join(gouvernance2, "CONSTITUTION.md")].find((p) => fs.existsSync(p)) ?? path.join(abs, "CONSTITUTION.md");
   const runs = path.join(etat, "runs");
   return {
     racine: abs,
@@ -7454,7 +7455,7 @@ function resoudreContexte(racine) {
     portFile: path.join(runs, "obeya.port"),
     verrou: path.join(runs, "verrou-mutation.lock"),
     gouvernance: gouvernance2,
-    constitution: path.join(gouvernance2, "CONSTITUTION.md"),
+    constitution,
     ihm: path.join(gouvernance2, "ihm", "index.html"),
     recette: path.join(abs, "dossier-recette"),
     codification: path.join(abs, "dossier-recette", "02_CODIFICATION.md"),

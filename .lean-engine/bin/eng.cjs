@@ -7427,6 +7427,7 @@ function resoudreContexte(racine) {
   }
   const { disposition, etat } = e;
   const gouvernance = path.join(abs, "agentic_orchestrator");
+  const constitution = [path.join(abs, "CONSTITUTION.md"), path.join(gouvernance, "CONSTITUTION.md")].find((p) => fs.existsSync(p)) ?? path.join(abs, "CONSTITUTION.md");
   const runs = path.join(etat, "runs");
   return {
     racine: abs,
@@ -7449,7 +7450,7 @@ function resoudreContexte(racine) {
     portFile: path.join(runs, "obeya.port"),
     verrou: path.join(runs, "verrou-mutation.lock"),
     gouvernance,
-    constitution: path.join(gouvernance, "CONSTITUTION.md"),
+    constitution,
     ihm: path.join(gouvernance, "ihm", "index.html"),
     recette: path.join(abs, "dossier-recette"),
     codification: path.join(abs, "dossier-recette", "02_CODIFICATION.md"),
@@ -11598,7 +11599,9 @@ function construirePack(ctx, engId) {
     "Tu es un implementor Lean Engine. Ce document contient tout ton contexte de travail. Ne cherche pas \xE0 lire les specs enti\xE8res ni les plans du d\xE9p\xF4t : ce qui n'est pas ici est hors de ton p\xE9rim\xE8tre.\n"
   );
   parts.push("\n---\n\n## Constitution (s'impose \xE0 tout le reste)\n");
-  parts.push(lireTexte(ctx.constitution));
+  parts.push(
+    fs23.existsSync(ctx.constitution) ? lireTexte(ctx.constitution) : "(no CONSTITUTION.md in this repository: lay one from the templates of the engine)"
+  );
   parts.push("\n---\n\n## Ton engagement\n\n```yaml\n");
   parts.push(texteEng);
   parts.push("```\n");

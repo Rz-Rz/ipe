@@ -1,2 +1,5 @@
-# Réservations de scope par engagement. Géré par l'outil, ne pas éditer à la main.
+# Scope reservations, one per commitment. Written by the cockpit under the
+# mutation lock: never edit this file by hand.
+# Granularity: the domain code of the requirements folder (GEO, COP, MESH). A
+# reservation holds for as long as the lease of its commitment holds.
 claims: []
