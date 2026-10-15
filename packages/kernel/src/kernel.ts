@@ -50,6 +50,7 @@ export class Kernel {
   /** What each object file holds on disk, to write only what changed. */
   private readonly written = new Map<ObjectId, string>();
   private history: Version[] = [];
+  private unreadableIndexKept = false;
   private events: Event[] = [];
   private state: State;
   readonly openReport: OpenReport;
@@ -70,7 +71,7 @@ export class Kernel {
   static async create(adapters: Adapters, name: string): Promise<Kernel> {
     if (await adapters.storage.exists(MANIFEST)) throw new KernelError("project_exists", `${MANIFEST} already exists`);
     const manifest: Manifest = { schema: 1, name, units: [] };
-    const report: OpenReport = { externalChanges: [], interrupted: false, historyUnreadable: false, missingUnits: [], anchorChanges: [] };
+    const report: OpenReport = { externalChanges: [], interrupted: false, historyUnreadable: false, missingUnits: [], unreadableObjects: [], anchorChanges: [] };
     const kernel = new Kernel(adapters, manifest, { schema: 1, version: null, units: {} }, report);
     await kernel.storage.write(MANIFEST, canonicalJson(manifest));
     await kernel.recordVersion("create", null);
@@ -83,7 +84,7 @@ export class Kernel {
     const manifestText = await storage.read(MANIFEST);
     if (manifestText === null) throw new KernelError("no_project", `${MANIFEST} not found`);
     const manifest = parseManifest(manifestText);
-    const report: OpenReport = { externalChanges: [], interrupted: false, historyUnreadable: false, missingUnits: [], anchorChanges: [] };
+    const report: OpenReport = { externalChanges: [], interrupted: false, historyUnreadable: false, missingUnits: [], unreadableObjects: [], anchorChanges: [] };
 
     let state: State = { schema: 1, version: null, units: {} };
     const stateText = await storage.read(STATE);
@@ -107,7 +108,18 @@ export class Kernel {
       const path = `${OBJECTS_DIR}/${file}`;
       const text = await storage.read(path);
       if (text === null) continue;
-      const object = parseObject(text, path);
+      let object: IpeObject;
+      try {
+        object = parseObject(text, path);
+      } catch (e) {
+        // A file that is not JSON is reported and skipped; a file that is JSON but breaks the
+        // description refuses the project, with the file named (SPEC-KER-002, SPEC-KER-008).
+        if (e instanceof KernelError && e.code === "invalid_json") {
+          report.unreadableObjects.push(path);
+          continue;
+        }
+        throw e;
+      }
       const previous = seen.get(object.id);
       if (previous !== undefined) {
         throw new KernelError("duplicate_id", `two object files carry the identifier ${object.id}: ${previous} and ${path}`);
@@ -207,11 +219,49 @@ export class Kernel {
     return clone(node);
   }
 
-  /** Writes the text of a unit, re-resolves the anchors that rest on it, records a version. */
-  async writeUnit(unitId: UnitId, text: string): Promise<ChangeResult> {
+  /** Registers an existing Markdown file as a unit, reading it as it is; nothing is rewritten. */
+  async adoptUnit(title: string, path: string, options: { parentId?: UnitId | null; index?: number } = {}): Promise<UnitNode> {
+    if (flatten(this.manifest.units).some((u) => u.path === path)) throw new KernelError("invalid_input", `${path} is already a unit`);
+    const text = await this.storage.read(path);
+    if (text === null) throw new KernelError("unknown_unit", `no file ${path} to adopt`);
+    const id = this.ids.next();
+    const node: UnitNode = { id, title, path, children: [] };
+    const siblings = options.parentId ? this.findNode(options.parentId)?.children : this.manifest.units;
+    if (siblings === undefined) throw new KernelError("unknown_unit", `no unit ${String(options.parentId)}`);
+    siblings.splice(options.index ?? siblings.length, 0, node);
+    this.texts.set(id, text);
+    await this.storage.write(MANIFEST, canonicalJson(this.manifest));
+    await this.recordVersion("adopt-unit", id);
+    return clone(node);
+  }
+
+  /**
+   * The text of a unit as the disk holds it now, when it differs from the text the kernel last
+   * read or wrote; null when the disk agrees. An edit made outside the product while the project
+   * is open is detected by content, never by a timestamp (SPEC-KER-009).
+   */
+  async externalText(unitId: UnitId): Promise<string | null> {
+    const node = this.findNode(unitId);
+    if (node === null) throw new KernelError("unknown_unit", `no unit ${unitId}`);
+    const known = this.readUnit(unitId);
+    const onDisk = await this.storage.read(node.path);
+    if (onDisk === null || onDisk === known) return null;
+    return onDisk;
+  }
+
+  /**
+   * Writes the text of a unit, re-resolves the anchors that rest on it, records a version.
+   * Refused with code `conflict` when the disk changed since the kernel last read or wrote the
+   * unit, unless `force` is given: the author chooses, the product never overwrites silently.
+   */
+  async writeUnit(unitId: UnitId, text: string, options: { force?: boolean } = {}): Promise<ChangeResult> {
     const previous = this.readUnit(unitId);
     const node = this.findNode(unitId);
     if (node === null) throw new KernelError("unknown_unit", `no unit ${unitId}`);
+    if (!options.force) {
+      const external = await this.externalText(unitId);
+      if (external !== null) throw new KernelError("conflict", `unit ${unitId} changed on disk since it was read: read externalText, then write with force to keep yours`);
+    }
     if (previous === text) return { version: this.currentVersion(), invalidated: [], anchorChanges: [] };
     this.texts.set(unitId, text);
     await this.storage.write(node.path, text);
@@ -288,6 +338,13 @@ export class Kernel {
     }
     const version: Version = { id: this.ids.next(), at: this.clock.now(), action, units };
     this.history.push(version);
+    // An index that could not be read is kept under another name before a fresh one replaces it:
+    // nothing of a history is thrown away, even unreadable.
+    if (this.openReport.historyUnreadable && !this.unreadableIndexKept) {
+      const broken = await this.storage.read(VERSIONS_INDEX);
+      if (broken !== null) await this.storage.write(`${VERSIONS_INDEX}.unreadable-${this.clock.now().replace(/[:.]/g, "-")}`, broken);
+      this.unreadableIndexKept = true;
+    }
     await this.storage.write(VERSIONS_INDEX, canonicalJson(this.history));
     this.state = { schema: 1, version: version.id, units };
     await this.writeState();
@@ -318,6 +375,8 @@ export class Kernel {
       if (filter.kind !== undefined && o.kind !== filter.kind) continue;
       out.push(clone(o));
     }
+    // A stable order, the same in memory and after a reopen: creation time, then identifier.
+    out.sort((x, y) => x.provenance.createdAt.localeCompare(y.provenance.createdAt) || x.id.localeCompare(y.id));
     return out;
   }
 

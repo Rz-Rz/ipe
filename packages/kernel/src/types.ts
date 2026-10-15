@@ -186,6 +186,8 @@ export interface OpenReport {
   historyUnreadable: boolean;
   /** Units the manifest names whose file is absent. */
   missingUnits: UnitId[];
+  /** Object files that are not JSON: reported by path and skipped. */
+  unreadableObjects: string[];
   anchorChanges: AnchorChange[];
 }
 
