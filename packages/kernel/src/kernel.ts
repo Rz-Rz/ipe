@@ -465,6 +465,12 @@ export class Kernel {
     if (current === undefined) throw new KernelError("unknown_object", `no object ${event.objectId}`);
     const snapshot = clone(current);
     const restored = clone(event.before);
+    // An undo that would change the approval state is the author's gesture, like the decision it reverses.
+    if (actor !== AUTHOR && restored.provenance.approval !== current.provenance.approval) {
+      const reason = `${actor} may not undo ${eventId}: it would change the approval state, which only the author decides`;
+      await this.journal("refused", actor, current.id, null, null, reason);
+      throw new KernelError("not_author", reason);
+    }
     await this.journal("undo", actor, restored.id, snapshot, restored, `undo of ${eventId}`);
     this.objects.set(restored.id, restored);
     this.reanchorObject(restored);

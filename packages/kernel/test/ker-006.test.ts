@@ -43,4 +43,24 @@ describe("SPEC-KER-006 Proposals and acceptance", () => {
     const own = await kernel.createObject({ kind: "note", title: "y", origin: "assistant", action: "test" }, "assistant");
     expect(own.provenance.approval).toBe("proposed");
   });
+
+  it("TST-KER-006d: an undo that would change the approval state is the author's only; another actor is refused and recorded", async () => {
+    const { kernel, unit } = await withUnit("A sentence with a claim in it.");
+    const proposal = await noteOn(kernel, unit.id, "a claim", { origin: "assistant" });
+    await kernel.accept(proposal.id, "author");
+    await kernel.reject(proposal.id, "author");
+    const acceptEvent = kernel.journalEvents().find((e) => e.kind === "accept");
+    const rejectEvent = kernel.journalEvents().find((e) => e.kind === "reject");
+    await expect(kernel.undo(rejectEvent?.id ?? "", "assistant")).rejects.toMatchObject({ code: "not_author" });
+    await expect(kernel.undo(acceptEvent?.id ?? "", "assistant")).rejects.toMatchObject({ code: "not_author" });
+    expect(kernel.getObject(proposal.id).provenance.approval).toBe("rejected");
+    expect(kernel.journalEvents().filter((e) => e.kind === "refused").map((e) => e.actor)).toEqual(["assistant", "assistant"]);
+    expect(kernel.journalEvents().filter((e) => e.kind === "undo")).toEqual([]);
+    const back = await kernel.undo(rejectEvent?.id ?? "", "author");
+    expect(back.provenance.approval).toBe("accepted");
+    // An undo that leaves the approval state as it is stays open to the actor who edited.
+    await kernel.editObject(proposal.id, { title: "renamed" }, "assistant");
+    const editEvent = kernel.journalEvents().find((e) => e.kind === "edit");
+    expect((await kernel.undo(editEvent?.id ?? "", "assistant")).title).toBe(proposal.title);
+  });
 });
