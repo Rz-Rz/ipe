@@ -38,6 +38,24 @@ Implementation field for all eleven: `packages/kernel/src/kernel.ts` (anchors in
 5. A context window that is no longer found is matched by its longest surviving suffix (before) or prefix (after), down to 6 characters, so that an edit near the passage does not hide an in-place rewrite.
 6. The journal is one JSON object per line; `undo` restores the full snapshot an event replaced, for edit, accept, reject, delete and refresh events, including after a reopen.
 
+## Mutants: each property is guarded by a test that falls when the property is broken
+
+Run with the script that injects one mutant at a time in the source, runs the named test file, and restores the source. Every mutant made its test file fail; the source is unchanged afterwards (`git status` clean).
+
+| Requirement | Mutant injected in the source | Test file that falls |
+|---|---|---|
+| SPEC-KER-001 | a unit's identifier derived from its path instead of a fresh identifier | ker-001.test.ts |
+| SPEC-KER-002 | an object without approval state accepted at load | ker-002.test.ts |
+| SPEC-KER-003 | a deleted passage reported intact | ker-003.test.ts |
+| SPEC-KER-004 | unit contents not stored by hash | ker-004.test.ts |
+| SPEC-KER-005 | a non-intact anchor does not make its object stale | ker-005.test.ts |
+| SPEC-KER-006 | anyone may accept or reject | ker-006.test.ts |
+| SPEC-KER-007 | undo restores the current state instead of the previous one | ker-007.test.ts |
+| SPEC-KER-010 | a dependency cycle accepted | ker-010.test.ts |
+| SPEC-KER-011 | dependents not invalidated | ker-011.test.ts |
+| SPEC-KER-013 | a dependency on an unknown object accepted | ker-013.test.ts |
+| SPEC-KER-014 | tombstones not counted | ker-014.test.ts |
+
 ## Known limits, stated
 
 - A passage rewritten together with both of its context windows beyond their last 6 characters is reported orphaned rather than changed; the author re-anchors the object (edit of its anchors). The code comments say so.
