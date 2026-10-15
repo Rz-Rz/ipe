@@ -2,7 +2,7 @@
 
 ## Result
 
-PASS
+PASS against the definition_of_done of ENG-0001 (four criteria, each with the evidence that proves it):
 
 1. Met: `packages/kernel` is a TypeScript package whose runtime code imports nothing from Node or the DOM (`grep -rn "from \"node:\|require(\|window.\|document." packages/kernel/src` returns nothing; its `tsconfig.json` compiles with `types: []` and `lib: ["ES2022"]`). From the repository root, `pnpm typecheck` passes and `pnpm test` reports 12 files, 31 tests, all passing.
 2. Met: every planned test of the eleven requirements exists under its identifier in the title, runs on the in-memory adapters, and passes. The table below names each file and title.
