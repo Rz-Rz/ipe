@@ -4,20 +4,20 @@ This file holds the AST requirements of milestone J-PRV: one bounded action that
 
 ### SPEC-AST-001: Ask about a chosen scope
 
-- Status: PLANNED
+- Status: PARTIAL
 - Source: Specified (product need)
 - Parent need: IPE-N05, IPE-P01, IPE-P03
-- Implementation: none
+- Implementation: `packages/assistant/src/index.ts`, `packages/providers/src/context.ts`
 - Acceptance priority: critical
 
 **Requirement.** The author must be able to ask a question about a chosen scope (a passage, a unit, or the whole project) through a chosen connection, and the product must record the answer as a proposed object anchored to the scope, depending on the call record, which the author can accept, reject, or delete, and must never change the manuscript by this action.
 
-**Coverage.** Nominal: question and unit chosen; the answer appears as a proposed object of kind answer in the objects panel, anchored to the unit's text, and its provenance shows the model, the version sent and the material considered. Limit: an empty answer is recorded as an answer with an empty body and reported. Error: a failed call leaves no answer object and shows the failure state (SPEC-PRV-006). Degraded: when the scoped text changes during the call, the answer rests on the version sent and the kernel marks it stale. Exclusion: manuscript edits proposed by the assistant (milestone J-GEN), proactive suggestions, several providers in one action.
+**Coverage.** Nominal: question and unit chosen; the answer appears as a proposed object of kind answer in the objects panel, anchored to the unit's text, and its provenance shows the model, the version sent and the material considered; a project scope anchors the answer to every unit with text, and the call record keeps the version read (TST-AST-001b). Limit: an empty answer is recorded as an answer with an empty body and reported. Error: a failed call leaves no answer object and shows the failure state (SPEC-PRV-006). Degraded: when the scoped text changes during the call, the answer rests on the version sent and the kernel marks it stale. This case is not met by ENG-0005: the answer object is created against the version current at its creation, its anchors are read from the new text at the offsets of the passage sent, their state is intact and stale is false, and only the call record keeps the version read; the kernel creates objects against the current version only, so the clause is carried by ENG-0009, and no test proves it yet. Exclusion: manuscript edits proposed by the assistant (milestone J-GEN), proactive suggestions, several providers in one action.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
 | TST-AST-001a | planned | e2e | From the interface, with a fake provider, the author asks about a unit, sees the answer as a proposed object, accepts it, and reads its provenance in the inspector. |
-| TST-AST-001b | planned | unit | The answer object is proposed, of origin assistant, anchored to the scope's passages, depends on the call record, and the manuscript is unchanged. |
+| TST-AST-001b | `packages/assistant/test/ask.test.ts` > SPEC-AST-001 Ask about a chosen scope > TST-AST-001b: the answer object is proposed, of origin assistant, anchored to the scope's passages, depends on the call record, and the manuscript is unchanged | unit | The answer object is proposed, of origin assistant, anchored to the scope's passages, depends on the call record, and the manuscript is unchanged. |
 
 ### SPEC-AST-002: Extract the memory of a chosen scope
 

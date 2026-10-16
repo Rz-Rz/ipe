@@ -1,6 +1,6 @@
 # Provider layer design note (milestone J-PRV)
 
-Version 0.1, 16 October 2026. Companion of `docs/KERNEL_DESIGN.md`. Requirements: `dossier-recette/14_PROVIDERS.md` (SPEC-PRV-001 to 007) and `15_ASSISTANT_ACTIONS.md` (SPEC-AST-001). Decision: DA-0004 (the first provider).
+Version 0.2, 16 October 2026, aligned with the delivery of ENG-0005. Companion of `docs/KERNEL_DESIGN.md`. Requirements: `dossier-recette/14_PROVIDERS.md` (SPEC-PRV-001 to 007) and `15_ASSISTANT_ACTIONS.md` (SPEC-AST-001). Decision: DA-0004 (the first provider).
 
 ## 1. Shape
 
@@ -19,21 +19,21 @@ interface Provider {
   id: string;                                   // "claude"
   name: string;
   catalogue: Catalogue;                         // versioned, dated, with its source
-  models(key: string, signal?: AbortSignal): Promise<ModelInfo[]>;        // what this key can reach
-  complete(key: string, request: CompletionRequest, signal?: AbortSignal): Promise<Completion>;
+  models(key: string, signal?: AbortSignalLike): Promise<ModelInfo[]>;    // what this key can reach, each with its lifecycle beside its limits
+  complete(key: string, request: CompletionRequest, signal?: AbortSignalLike): Promise<Completion>;
 }
 interface CompletionRequest { model: string; system: string; input: string; maxOutputTokens: number }
-interface Completion { text: string; usage: Usage | null; stopReason: string | null; raw?: unknown }
+interface Completion { text: string; usage: Usage | null; stopReason: string | null; requestId: string | null }
 interface Usage { inputTokens: number; outputTokens: number }
-type FailureState = "no_network" | "auth_refused" | "rate_limited" | "timed_out" | "cancelled" | "overloaded" | "invalid_request" | "unparseable";
-class ProviderError extends Error { state: FailureState; providerMessage: string | null; retryAfterSeconds: number | null }
+type FailureState = "no_network" | "auth_refused" | "billing_refused" | "rate_limited" | "timed_out" | "cancelled" | "overloaded" | "invalid_request" | "provider_error" | "unparseable";
+class ProviderError extends Error { state: FailureState; providerMessage: string | null; retryAfterSeconds: number | null; status: number | null }
 ```
 
-`fetch` is injected at construction (`new ClaudeProvider({ fetch })`), so the adapter runs in Node and in a browser and the tests give it a fake.
+`fetch` is injected at construction (`new ClaudeProvider({ fetch })`) under the shape `FetchLike` (a status, headers, a text body), so the adapter runs in Node and in a browser and the tests give it a fake; `AbortSignalLike` is the shape of an abort signal, with its optional `reason`. The fixtures of the documented exchanges live under `packages/providers-claude/test/fixtures/`.
 
 ## 3. The catalogue
 
-One JSON file per provider, versioned in the package, with `source` (the URL of the provider's pricing and model pages), `consultedOn` (ISO date), and per model: `id`, `label`, `capabilities` (`text`, `transcription`, `image`), `billing` (`separate_balance` or `subscription_allowance`), `inputPricePerMillionTokens`, `outputPricePerMillionTokens` (numbers in US dollars, or `null` when not known), and `limits` (free text from the source, or `null`). The cost estimate is `usage.inputTokens * input / 1e6 + usage.outputTokens * output / 1e6`, shown as "about $x, estimated from the catalogue of <date>"; a model absent from the catalogue or with `null` prices shows "price not known". No figure is written in the catalogue without its source and date.
+One typed TypeScript constant per provider, versioned in the package (`CLAUDE_CATALOGUE` in `packages/providers-claude/src/catalogue.ts`, typed by the contract so that no JSON import is needed in a package without platform modules), with `source` (the URLs of the provider's pricing and model pages), `consultedOn` (ISO date), and per model: `id`, `label`, `capabilities` (`text`, `transcription`, `image`), `billing` (`separate_balance` or `subscription_allowance`), the prices as bands (`tiers`, each with a bound on the input tokens or none, so that the two bands of one model are stated as the provider prices them, in US dollars per million tokens, or `null` when not known), and `limits` (free text from the source, or `null`). A model the source names without an identifier is listed by display name and matched on the display name the live list gives. A cost is one of three answers, never a bare number: an estimate from the price band the input falls in, shown as "about $x, estimated from the catalogue of <date>" with its sources; "price not known" with the catalogue's date when the catalogue has no price for the model; "not reported" when the provider returned no usage. No figure is written in the catalogue without its source and date.
 
 ## 4. Context assembly and preview
 
@@ -41,11 +41,11 @@ A scope is `{ kind: "passage", unit, start, end } | { kind: "unit", unit } | { k
 
 ## 5. The call record
 
-A call is an object of kind `call` created before the request leaves, with `origin: "assistant"`, `action: "call"`, body `{ provider, model, scope, version, instructionsHash, startedAt, outcome: "running" }`, then updated with `usage`, `outcome` (`completed`, `failed`, `cancelled`), `failure` (state and reason) and `finishedAt`. It is accepted at creation (a record, not a proposal). The answer object (kind `answer`, origin `assistant`, approval `proposed`, anchored to the scope) lists the call record in `dependsOn`. The record holds identifiers and the version, not the text: the version recovers it.
+A call is an object of kind `call` created before the request leaves, with `origin: "author"` and `action: "call"` (the author's act, not a proposal of the assistant), body `{ provider, model, scope, version, question, sent, instructionsCharacters, startedAt, outcome: "running" }` where `sent` is the preview of what was sent (identifiers, titles and sizes, never the text), then updated with `usage`, `cost`, `requestId`, `outcome` (`completed`, `failed`, `cancelled`), `failure` (state, message, the provider's message, the retry delay) and `finishedAt`. It is accepted at creation (a record, not a proposal). The answer object (kind `answer`, origin `assistant`, approval `proposed`, anchored to the scope) lists the call record in `dependsOn` and carries the question, the text, the provider, the model, the usage, the cost and the stop reason. The record holds identifiers and the version, not the text: the version recovers it. The answer is created against the version current at its creation, since the kernel creates objects against the current version only; when the scoped text changes during the call, its anchors are read from the new text and are not marked stale, which is the degraded case of SPEC-AST-001, left to ENG-0009 (an object created against a named version).
 
 ## 6. Failures and cancellation
 
-Every provider error becomes a `ProviderError` with its state (Section 2). The HTTP status maps as the provider documents: 401 and 403 to `auth_refused`, 429 to `rate_limited` with `retry-after` when present, 529 to `overloaded`, 400 and 404 to `invalid_request`, a fetch rejection to `no_network`, an abort to `cancelled`, a timeout (the caller's signal) to `timed_out`, a response the adapter cannot read to `unparseable` with the raw status. The action writes the failure into the call record and creates nothing else. Retry is a new call with a new record.
+Every provider error becomes a `ProviderError` with its state (Section 2). The HTTP status maps as the provider documents: 401 and 403 to `auth_refused`, 402 to `billing_refused`, 429 to `rate_limited` with `retry-after` in seconds when present, 529 to `overloaded`, 408 and 504 to `timed_out`, any other 4xx to `invalid_request`, any other 5xx to `provider_error`, a response the adapter cannot read to `unparseable` with the raw status. What the platform throws maps too: the adapter sets no timer of its own, the caller's signal is the timeout, and a timeout armed on that signal is recognised by the name TimeoutError of the rejection or of the signal's reason, tested before the abort; any other abort maps to `cancelled`, and any other rejection of `fetch` to `no_network`. The action writes the failure into the call record and creates nothing else. After the provider answered, the action reads the signal when the answer arrives and again immediately before the answer object is created, once the record is completed; a cancellation found at either reading rewrites the record as cancelled, with the usage and the cost the provider reported, and creates nothing; the window that remains is that creation itself. Retry is a new call with a new record.
 
 ## 7. The key store
 
