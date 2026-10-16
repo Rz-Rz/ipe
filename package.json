@@ -10,11 +10,15 @@
   "scripts": {
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run",
-    "build": "pnpm -r --if-present build"
+    "build": "pnpm -r --if-present build",
+    "e2e": "playwright test",
+    "e2e:browser": "playwright test --project=browser",
+    "e2e:electron": "playwright test --project=electron"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.0"
+    "vitest": "^2.1.0",
+    "@playwright/test": "^1.48.0"
   }
 }
