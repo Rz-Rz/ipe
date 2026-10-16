@@ -7,8 +7,8 @@ Généré le 2026-10-16 par le coordinateur agentique. Ne pas éditer : toute co
 
 | Jalon | Exigences vertes | Engagements liés (tenus/total) | Chemin critique restant |
 |---|---|---|---|
-| J-KER | 20/20 | 4/4 | (aucun) |
-| J-PRV | 0/8 | 1/2 | ENG-0006 |
+| J-KER | 20/20 | 4/5 | ENG-0009 |
+| J-PRV | 2/8 | 1/3 | ENG-0006 |
 | J-MEM | 0/8 | 0/2 | ENG-0006 -> ENG-0008 |
 | J-SYS | 0/0 | 0/0 | (aucun) |
 | J-CHR | 0/0 | 0/0 | (aucun) |
@@ -25,6 +25,7 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 - ENG-0006 (débloque 1) : Desktop: provider connection and key store, capability and cost panel, preview, ask action with failure states, provider switch
 - ENG-0007 (débloque 1) : Project memory: entries as objects, extraction with located quotes, reconciliation, corrections and merges, the corpus evaluation
+- ENG-0009 (débloque 0) : Kernel: an object created against a named version, so that an answer whose scoped text changed during the call is anchored to the text sent and marked stale
 
 ### En vol
 
@@ -36,12 +37,10 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ## 3. Arbitrages et décisions (votre inbox)
 
-- (aucune demande ouverte)
+- DA-0005 : DA-0005: May the provider's API host and version header be written in clear in the source, or do they stay assembled at run time? ; décideur Karim Dhrif, réponse avant null, défaut si silence : A
 
 ## 4. Anomalies
 
-- dérive spec : SPEC-PRV-005 déclaré IMPLEMENTED par ENG-0005 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-PRV-007 déclaré IMPLEMENTED par ENG-0005 (livraison vérifiée) mais PLANNED au dossier de recette
 - dette documentaire : SPEC-AST-001 (impact déclaré par ENG-0005, non résorbé)
 - dette documentaire : SPEC-KER-003 (impact déclaré par ENG-0001, non résorbé)
 - dette documentaire : SPEC-KER-008 (impact déclaré par ENG-0002, non résorbé)
