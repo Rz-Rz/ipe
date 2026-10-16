@@ -1,0 +1,91 @@
+:root {
+  --bg: #fbfaf7;
+  --panel: #ffffff;
+  --ink: #1f1d1a;
+  --muted: #6b6560;
+  --line: #e4dfd7;
+  --accent: #7a5c2e;
+  --ok: #2f7d4f;
+  --warn: #b7791f;
+  --bad: #b23b3b;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 4px; padding: 2px 8px; color: var(--ink); }
+button:disabled { opacity: 0.4; cursor: default; }
+input { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--ink); }
+
+.app {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  grid-template-rows: 44px 1fr;
+  grid-template-areas: "top top top" "outline editor side";
+  height: 100vh;
+}
+
+.topbar { grid-area: top; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.brand { letter-spacing: 0.08em; color: var(--accent); }
+.grow { flex: 1; }
+.title { color: var(--muted); }
+.vim { font-size: 0.9em; color: var(--muted); }
+.save-state { padding: 2px 10px; border-radius: 10px; font-size: 0.85em; border: 1px solid var(--line); text-transform: lowercase; }
+.save-state.saved { color: var(--ok); }
+.save-state.unsaved, .save-state.saving { color: var(--warn); }
+.save-state.conflict, .save-state.error { color: var(--bad); font-weight: 600; }
+
+.outline { grid-area: outline; overflow: auto; border-right: 1px solid var(--line); padding: 8px 0; background: var(--panel); }
+.side { grid-area: side; overflow: auto; border-left: 1px solid var(--line); background: var(--panel); }
+.panel { padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.panel-title { font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 4px 0 8px; }
+.outline .panel-title { padding: 0 12px; }
+.unit { display: flex; align-items: center; gap: 4px; padding: 2px 8px; }
+.unit.selected { background: #f1ece3; }
+.unit-title { border: none; background: none; text-align: left; flex: 1; padding: 4px 4px; }
+.unit-actions { display: none; gap: 2px; }
+.unit:hover .unit-actions, .unit.selected .unit-actions { display: inline-flex; }
+.unit-actions button { padding: 0 5px; font-size: 0.85em; }
+.add-unit { display: flex; gap: 6px; padding: 8px 12px; }
+.add-unit input { flex: 1; min-width: 0; }
+.hint { padding: 0 12px; color: var(--muted); }
+
+.editor-pane { grid-area: editor; display: flex; flex-direction: column; overflow: hidden; }
+.editor { flex: 1; overflow: auto; }
+.editor .cm-editor { height: 100%; font-size: 17px; line-height: 1.6; }
+.editor .cm-scroller { font-family: inherit; }
+.editor .cm-content { max-width: 72ch; margin: 0 auto; padding: 32px 24px; }
+
+.conflict { border-bottom: 2px solid var(--bad); padding: 12px 16px; background: #fff4f4; }
+.conflict-texts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.conflict pre { white-space: pre-wrap; font: inherit; border: 1px solid var(--line); padding: 8px; max-height: 160px; overflow: auto; background: var(--panel); }
+.conflict button { margin: 8px 8px 0 0; }
+
+.hits, .objects { list-style: none; padding: 0; margin: 0; }
+.hits button, .objects button { display: block; width: 100%; text-align: left; border: none; background: none; padding: 4px 0; border-bottom: 1px dotted var(--line); }
+.hit-where { display: block; font-size: 0.8em; color: var(--muted); }
+.hit-excerpt { white-space: pre-wrap; }
+.kind { font-size: 0.75em; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.kind.stale { color: var(--warn); }
+.approval { font-size: 0.8em; color: var(--muted); }
+.anchor { font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 6px; border-radius: 8px; border: 1px solid var(--line); }
+.anchor.intact { color: var(--ok); }
+.anchor.changed, .anchor.ambiguous { color: var(--warn); }
+.anchor.orphaned { color: var(--bad); }
+
+.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 6px; }
+
+.save-error {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  background: #fdecea;
+  color: #7a1f1f;
+  border-bottom: 1px solid #f2b8b5;
+  font-size: 13px;
+}
+
+.unit input.rename { flex: 1; font: inherit; padding: 2px 6px; }
