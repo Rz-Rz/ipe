@@ -1,0 +1,10 @@
+verdict: approve
+mandat: MAN-ENG-0005-2
+diff_empreinte: sha256:b1949377a31687b17f9149a0705615c036b3871ce8b3186e23dd35d4a775dd33
+violations: []
+par_exigence: {"SPEC-PRV-002":"partielle","SPEC-PRV-003":"partielle","SPEC-PRV-005":"couverte","SPEC-PRV-006":"partielle","SPEC-PRV-007":"couverte","SPEC-AST-001":"partielle"}
+tests: {"executes":75,"verts":75,"non_verifiables":["TST-PRV-007b (packages/providers-claude/test/claude.test.ts): skipped, no IPE_CLAUDE_API_KEY in the environment; declared not verified, as the requirement's degraded case asks"]}
+tests_cites: ["pnpm typecheck","pnpm test"]
+motif_arbitrage: null
+mineur: false
+depose_le: '2026-10-16T12:58:47+00:00'

@@ -2,12 +2,4 @@
 # mutation lock: never edit this file by hand.
 # Granularity: the domain code of the requirements folder (GEO, COP, MESH). A
 # reservation holds for as long as the lease of its commitment holds.
-claims:
-- domaine: PRV
-  eng: ENG-0005
-  owner: coordinator-session
-  expires: 2026-10-20T02:02+00:00
-- domaine: AST
-  eng: ENG-0005
-  owner: coordinator-session
-  expires: 2026-10-20T02:02+00:00
+claims: []

@@ -8,31 +8,30 @@ Généré le 2026-10-16 par le coordinateur agentique. Ne pas éditer : toute co
 | Jalon | Exigences vertes | Engagements liés (tenus/total) | Chemin critique restant |
 |---|---|---|---|
 | J-KER | 20/20 | 4/4 | (aucun) |
-| J-PRV | 0/8 | 0/2 | ENG-0005 -> ENG-0006 |
-| J-MEM | 0/8 | 0/2 | ENG-0005 -> ENG-0006 -> ENG-0008 |
+| J-PRV | 0/8 | 1/2 | ENG-0006 |
+| J-MEM | 0/8 | 0/2 | ENG-0006 -> ENG-0008 |
 | J-SYS | 0/0 | 0/0 | (aucun) |
 | J-CHR | 0/0 | 0/0 | (aucun) |
 | J-REV | 0/0 | 0/0 | (aucun) |
 | J-GEN | 0/0 | 0/0 | (aucun) |
 | J-PUB | 0/0 | 0/0 | (aucun) |
 
-PPC (promesses tenues) : 100 % (4/4)
+PPC (promesses tenues) : 100 % (5/5)
 Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ## 2. Réseau d'engagements
 
 ### Frontière (prêt à tirer, trié par poids de déblocage)
 
-- (vide)
+- ENG-0006 (débloque 1) : Desktop: provider connection and key store, capability and cost panel, preview, ask action with failure states, provider switch
+- ENG-0007 (débloque 1) : Project memory: entries as objects, extraction with located quotes, reconciliation, corrections and merges, the corpus evaluation
 
 ### En vol
 
-- ENG-0005 : Provider layer: contract, fake provider, context assembly and preview, call record, failure states, the Claude adapter, the ask action ; promettant coordinator-session, réservé par Karim Dhrif <karimdhrif4444@gmail.com>, pris le 2026-10-16T02:02:13+00:00
+- (aucun)
 
 ### En attente ou gelés
 
-- ENG-0006 [en_attente] : Desktop: provider connection and key store, capability and cost panel, preview, ask action with failure states, provider switch (attend : ENG-0004, ENG-0005)
-- ENG-0007 [en_attente] : Project memory: entries as objects, extraction with located quotes, reconciliation, corrections and merges, the corpus evaluation (attend : ENG-0005)
 - ENG-0008 [en_attente] : Desktop: the memory panel, extraction review, the provenance question on an entry, corrections and merges (attend : ENG-0006, ENG-0007)
 
 ## 3. Arbitrages et décisions (votre inbox)
@@ -41,6 +40,8 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ## 4. Anomalies
 
+- dérive spec : SPEC-PRV-005 déclaré IMPLEMENTED par ENG-0005 (livraison vérifiée) mais PLANNED au dossier de recette
+- dérive spec : SPEC-PRV-007 déclaré IMPLEMENTED par ENG-0005 (livraison vérifiée) mais PLANNED au dossier de recette
 - dette documentaire : SPEC-AST-001 (impact déclaré par ENG-0005, non résorbé)
 - dette documentaire : SPEC-KER-003 (impact déclaré par ENG-0001, non résorbé)
 - dette documentaire : SPEC-KER-008 (impact déclaré par ENG-0002, non résorbé)
