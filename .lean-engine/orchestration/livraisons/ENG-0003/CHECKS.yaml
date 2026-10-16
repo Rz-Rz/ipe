@@ -1,5 +1,5 @@
 engagement: ENG-0003
-date: '2026-10-16T00:57:26+00:00'
+date: '2026-10-16T01:33:47+00:00'
 worktree: /home/ultimatron/projects/solo/wt/eng-0003
 checks:
   rapport:
@@ -19,13 +19,16 @@ checks:
     detail: diff confiné au scope déclaré
   registre:
     resultat: ok
-    detail: 4 engagements, 0 erreur(s), 0 avertissement(s)
+    detail: 6 engagements, 0 erreur(s), 0 avertissement(s)
   fraicheur:
     resultat: ok
     detail: aucune lecture périmée
   charte:
     resultat: ok
     detail: no line introduced breaks the charter
+  reprise:
+    resultat: ok
+    detail: REPORT.md answers the 7 violation(s) of MAN-ENG-0003-1
   mutants:
     resultat: ok
     detail: REPORT.md names the mutants it replayed, which the verifier replays in turn

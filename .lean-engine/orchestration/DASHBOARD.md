@@ -8,7 +8,7 @@ Généré le 2026-10-16 par le coordinateur agentique. Ne pas éditer : toute co
 | Jalon | Exigences vertes | Engagements liés (tenus/total) | Chemin critique restant |
 |---|---|---|---|
 | J-KER | 14/20 | 2/4 | ENG-0003 -> ENG-0004 |
-| J-PRV | 0/0 | 0/0 | (aucun) |
+| J-PRV | 0/8 | 0/2 | ENG-0003 -> ENG-0004 -> ENG-0006 |
 | J-MEM | 0/0 | 0/0 | (aucun) |
 | J-SYS | 0/0 | 0/0 | (aucun) |
 | J-CHR | 0/0 | 0/0 | (aucun) |
@@ -32,6 +32,8 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 ### En attente ou gelés
 
 - ENG-0004 [en_attente] : Kernel: a save refused after the unit file landed completes at the next retry (attend : ENG-0003)
+- ENG-0005 [en_attente] : Provider layer: contract, fake provider, context assembly and preview, call record, failure states, the Claude adapter, the ask action (attend : ENG-0003)
+- ENG-0006 [en_attente] : Desktop: provider connection and key store, capability and cost panel, preview, ask action with failure states, provider switch (attend : ENG-0004, ENG-0005)
 
 ## 3. Arbitrages et décisions (votre inbox)
 
@@ -49,3 +51,4 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 - dette documentaire : SPEC-PRJ-002 (impact déclaré par ENG-0003, non résorbé)
 - dette documentaire : SPEC-PRJ-003 (impact déclaré par ENG-0003, non résorbé)
 - dette documentaire : SPEC-PRJ-005 (impact déclaré par ENG-0003, non résorbé)
+- dette documentaire : SPEC-PRJ-006 (impact déclaré par ENG-0003, non résorbé)
