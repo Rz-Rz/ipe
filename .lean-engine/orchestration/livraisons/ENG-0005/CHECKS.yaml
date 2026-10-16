@@ -1,5 +1,5 @@
 engagement: ENG-0005
-date: '2026-10-16T12:50:51+00:00'
+date: '2026-10-16T12:51:59+00:00'
 worktree: /home/ultimatron/projects/solo/wt/eng-0005
 checks:
   rapport:
@@ -27,8 +27,8 @@ checks:
     resultat: ok
     detail: no line introduced breaks the charter
   reprise:
-    resultat: ko
-    detail: 'REPORT.md answers none of V1, V2, V3 (the violations of MAN-ENG-0005-1, listed in .eng/REWORK.md): a section `## Rework` names each mark with what was changed and the test that proves it'
+    resultat: ok
+    detail: REPORT.md answers the 3 violation(s) of MAN-ENG-0005-1
   mutants:
     resultat: ok
     detail: REPORT.md names the mutants it replayed, which the verifier replays in turn
