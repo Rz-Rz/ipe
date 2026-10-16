@@ -1,0 +1,10 @@
+verdict: approve
+mandat: MAN-ENG-0002-2
+diff_empreinte: sha256:be0f3afe81b86df0cc988cc1eea3064e363bbd9ec49fe02ab5dfb0ee6f65d521
+violations: []
+par_exigence: {"SPEC-KER-008":"couverte","SPEC-KER-009":"couverte","SPEC-KER-012":"couverte"}
+tests: {"executes":48,"verts":48,"non_verifiables":[]}
+tests_cites: ["pnpm typecheck","pnpm test"]
+motif_arbitrage: null
+mineur: false
+depose_le: '2026-10-16T00:49:19+00:00'
