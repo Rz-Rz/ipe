@@ -8,7 +8,7 @@ PASS against the definition_of_done of ENG-0002 (three criteria, each with the e
 2. Met: `packages/adapters-node` implements the kernel's adapters on Node: a storage rooted at the project folder with atomic writes (temporary file in the same folder, then one rename), append, list, remove, exists; the system clock; random identifiers; the platform digest; with `createProject` and `openProject`. The tests TST-KER-008a to 008c, TST-KER-009a to 009c and TST-KER-012a to 012c exist under their names on temporary folders and pass: the fault injection at each step of a save (TST-KER-012a, the number of steps measured on a clean run, every step tried), the full-disk simulation (TST-KER-012b), and a crash after the temporary file and before the rename (TST-KER-012c, added).
 3. Met: this report.
 
-From the repository root, `pnpm typecheck` passes and `pnpm test` reports 16 files, 47 tests, all passing (kernel 38, adapters 9).
+From the repository root, `pnpm typecheck` passes and `pnpm test` reports 16 files, 48 tests, all passing (kernel 38, adapters 10).
 
 ## Requirements and the tests that prove them
 
@@ -16,7 +16,7 @@ Executable references follow the codification: file path, then `describe > it` t
 
 | Requirement | Tests (file: `packages/adapters-node/test/…`) | Status the coordinator can set |
 |---|---|---|
-| SPEC-KER-008 | `ker-008.test.ts` > SPEC-KER-008 Documented on-disk formats > TST-KER-008a, TST-KER-008b, TST-KER-008c | IMPLEMENTED |
+| SPEC-KER-008 | `ker-008.test.ts` > SPEC-KER-008 Documented on-disk formats > TST-KER-008a, TST-KER-008b, TST-KER-008c, TST-KER-008d | IMPLEMENTED |
 | SPEC-KER-009 | `ker-009.test.ts` > SPEC-KER-009 External edits are never discarded > TST-KER-009a, TST-KER-009b, TST-KER-009c | IMPLEMENTED |
 | SPEC-KER-012 | `ker-012.test.ts` > SPEC-KER-012 Consistent state after interruption > TST-KER-012a, TST-KER-012b, TST-KER-012c | IMPLEMENTED |
 
@@ -46,10 +46,23 @@ Run with the script that injects one mutant at a time, runs the named test file 
 | SPEC-KER-012 | the target written in place, not through a renamed temporary file | ker-012.test.ts |
 | SPEC-KER-012 | a failed write leaves its temporary file behind | ker-012.test.ts |
 | SPEC-KER-004 | an unreadable versions index overwritten without a copy | ker-004.test.ts (kernel) |
+| SPEC-KER-012 | the in-memory text replaced before the storage write (rework, V1) | ker-012.test.ts |
+| SPEC-KER-008 | the count of skipped journal lines discarded at opening (rework, V5) | ker-008.test.ts |
+
+## Rework
+
+Answers to the marks of `.eng/REWORK.md` (MAN-ENG-0002-1, minor reject), each with the change and the test that proves it.
+
+- V1: `writeUnit` now writes the unit's file first and replaces the kernel's text only once the storage accepted the write (`packages/kernel/src/kernel.ts`, writeUnit). After a refused write the kernel holds the disk's text: `externalText` answers null, the retry is an ordinary save, and the author's text lands. TST-KER-012b (`packages/adapters-node/test/ker-012.test.ts`) now goes on in the same kernel after the ENOSPC refusal: it asserts the text held, the null `externalText`, the retried save, the file on disk, and the reopened project holding the author's text. The mutant that sets the text before the write falls under it.
+- V2: `docs/FORMAT.md` Section 1, item 4 states the order the kernel follows: the unit's file, then the objects it touched, then the blob, then the versions index, then the state. The header comment of `packages/kernel/src/kernel.ts` states the same order. TST-KER-012a counts the five steps; TST-KER-008a reads the store.
+- V3: `docs/FORMAT.md` Section 5 enumerates `adopt-unit` with the other version actions, each with what produces it. `packages/kernel/test/adopt.test.ts` records such a version; TST-KER-008a reads the index.
+- V4: `docs/FORMAT.md` Section 1, item 3 excepts the journal: one compact JSON object per line, keys in the order the kernel writes them, as Section 6 shows. TST-KER-008a parses the journal line by line.
+- V5: the count of skipped journal lines is reported: `OpenReport.journalLinesSkipped` (`packages/kernel/src/types.ts`), set by `Kernel.open` from `parseEvents`. `docs/FORMAT.md` Section 6 says so. TST-KER-008d (added) cuts the last journal line in half, reopens, and asserts a count of 1 with every complete event kept. The mutant that discards the count falls under it.
+- V6: `docs/FORMAT.md` Section 1, item 4 names the `<target>.<pid>.<time>.<random>.tmp` file an interrupted write can leave, and Section 8 tells a reader to ignore every file whose name ends in `.tmp`; the kernel lists only `*.json` under the objects folder. TST-KER-012c asserts no temporary file after a failed write.
 
 ## Known limits, stated
 
-- The journal is appended with the platform's append, not through a renamed temporary file. A crash in the middle of an append leaves a truncated last line, which the reader skips and counts; since the event is written before the object, the action it described was not performed, and the project stays consistent. An append that succeeded before a failed object write leaves an event whose `after` snapshot the object does not show; undoing it restores the state the object already has.
+- The journal is appended with the platform's append, not through a renamed temporary file. A crash in the middle of an append leaves a truncated last line, which the reader skips, the count being reported at opening (`journalLinesSkipped`); since the event is written before the object, the action it described was not performed, and the project stays consistent. An append that succeeded before a failed object write leaves an event whose `after` snapshot the object does not show; undoing it restores the state the object already has.
 - TST-KER-012a injects faults in the storage adapter, between the kernel's steps; TST-KER-012c covers the step between the temporary file and the rename. A crash of the operating system during the rename itself relies on the file system's guarantee, which is not tested here.
 - The full-disk case is simulated by an adapter error carrying `ENOSPC`, not by a full file system.
 - The conflict check reads the unit's file at every save; on a slow disk this is the cost of never overwriting an external edit.
@@ -66,6 +79,6 @@ None. No requirement, milestone, interface or scope needed a change.
 
 ## Documentation updated
 
-- `docs/FORMAT.md`: created; the on-disk format, version 1, with the preserved unreadable index.
-- `docs/KERNEL_DESIGN.md` (outside this scope) is now incomplete: Section 5 must add that an unreadable index is kept under another name and that object files that are not JSON are reported and skipped; Section 6 may name the rename step of the Node storage; Section 7 must add that `writeUnit` refuses a conflict unless forced and that `externalText` returns the disk text. Drafted in DOC_UPDATE.md for the coordinator at integration.
+- `docs/FORMAT.md`: created; the on-disk format, version 1, with the preserved unreadable index; corrected at rework (write order, `adopt-unit`, journal line shape, skipped-line count, temporary files).
+- `docs/KERNEL_DESIGN.md` (outside this scope) is now incomplete: Section 5 must add that an unreadable index is kept under another name and that object files that are not JSON are reported and skipped; Section 6 may name the rename step of the Node storage; Section 7 must add that `writeUnit` refuses a conflict unless forced, that `externalText` returns the disk text, and that the opening report carries `journalLinesSkipped`. Drafted in DOC_UPDATE.md for the coordinator at integration.
 - `dossier-recette/10_PROVENANCE_KERNEL.md`: statuses, implementation fields and executable references per SPEC_UPDATE.md; the SPEC-KER-004 degraded case gains the kept copy. To be applied by the coordinator at integration.

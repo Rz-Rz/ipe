@@ -1,6 +1,6 @@
 # Tableau de pilotage (généré)
 
-Généré le 2026-10-15 par le coordinateur agentique. Ne pas éditer : toute correction se fait à la source.
+Généré le 2026-10-16 par le coordinateur agentique. Ne pas éditer : toute correction se fait à la source.
 
 
 ## 1. Jalons et fiabilité

@@ -1,0 +1,36 @@
+[lean essai] run
+$ pnpm typecheck
+$ pnpm -r --if-present typecheck
+$ tsc -p tsconfig.json && tsc -p tsconfig.test.json
+$ tsc -p tsconfig.json && tsc -p tsconfig.test.json
+[lean essai] exit 0, 5169 ms, 2026-10-15T18:23:48+00:00
+[lean essai] run
+$ pnpm test
+
+ RUN  v2.1.9 /home/ultimatron/projects/solo/wt/eng-0002
+
+ ✓ |@ipe/kernel| test/adopt.test.ts (2 tests) 15ms
+ ✓ |@ipe/kernel| test/ker-014.test.ts (1 test) 20ms
+ ✓ |@ipe/kernel| test/ker-010.test.ts (2 tests) 23ms
+ ✓ |@ipe/kernel| test/ker-002.test.ts (2 tests) 22ms
+ ✓ |@ipe/kernel| test/ker-006.test.ts (4 tests) 22ms
+ ✓ |@ipe/kernel| test/ker-013.test.ts (2 tests) 25ms
+ ✓ |@ipe/kernel| test/ker-004.test.ts (3 tests) 28ms
+ ✓ |@ipe/kernel| test/ker-007.test.ts (3 tests) 35ms
+ ✓ |@ipe/kernel| test/sha256.test.ts (2 tests) 58ms
+ ✓ |@ipe/kernel| test/ker-005.test.ts (4 tests) 120ms
+ ✓ |@ipe/kernel| test/ker-011.test.ts (2 tests) 141ms
+ ✓ |@ipe/adapters-node| test/ker-009.test.ts (3 tests) 163ms
+ ✓ |@ipe/kernel| test/ker-001.test.ts (3 tests) 205ms
+ ✓ |@ipe/adapters-node| test/ker-008.test.ts (3 tests) 261ms
+ ✓ |@ipe/kernel| test/ker-003.test.ts (8 tests) 310ms
+ ✓ |@ipe/adapters-node| test/ker-012.test.ts (3 tests) 504ms
+   ✓ SPEC-KER-012 Consistent state after interruption > TST-KER-012a: with a fault injected at each step of a write, the project reopens in its last consistent state 382ms
+
+ Test Files  16 passed (16)
+      Tests  47 passed (47)
+   Start at  20:23:48
+   Duration  1.83s (transform 1.45s, setup 0ms, collect 4.24s, tests 1.95s, environment 12ms, prepare 6.33s)
+
+$ vitest run
+[lean essai] exit 0, 2628 ms, 2026-10-15T18:23:50+00:00

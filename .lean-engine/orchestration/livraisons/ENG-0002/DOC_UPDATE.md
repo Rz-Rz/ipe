@@ -4,7 +4,7 @@ A block with `impact :` names what a document outside the scope of this session 
 
 ## SPEC-KER-008
 
-impact : docs/KERNEL_DESIGN.md, Section 5: the on-disk layout is specified by docs/FORMAT.md (version 1), which the section cites as the authority; add that an object file that is not JSON is reported by its path at opening and skipped, while a file that breaks the format refuses the project; add that an unreadable versions index is kept under `index.json.unreadable-<time>` before a fresh index replaces it.
+impact : docs/KERNEL_DESIGN.md, Section 5: the on-disk layout is specified by docs/FORMAT.md (version 1), which the section cites as the authority; add that an object file that is not JSON is reported by its path at opening and skipped, while a file that breaks the format refuses the project; add that an unreadable versions index is kept under `index.json.unreadable-<time>` before a fresh index replaces it; add that a file whose name ends in `.tmp`, left by an interrupted write, is ignored. Section 7: the opening report carries `journalLinesSkipped`, the count of journal lines skipped at opening.
 
 ## SPEC-KER-009
 
