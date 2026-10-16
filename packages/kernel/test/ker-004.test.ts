@@ -42,5 +42,9 @@ describe("SPEC-KER-004 Manuscript versions", () => {
     expect(result.version).not.toBeNull();
     expect(reopened.readUnit(unit.id)).toBe("still here, and edited\n");
     expect(reopened.versions().length).toBe(1);
+    // The unreadable index was kept under another name before the fresh one replaced it.
+    const kept = [...storage.files.keys()].filter((p) => p.startsWith(`${VERSIONS_INDEX}.unreadable-`));
+    expect(kept).toHaveLength(1);
+    expect(storage.files.get(kept[0] ?? "")).toBe("{ this is not json");
   });
 });
