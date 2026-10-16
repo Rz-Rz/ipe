@@ -97,4 +97,19 @@ describe("SPEC-KER-008 Documented on-disk formats", () => {
     expect(reopened.listObjects().map((o) => o.id)).toEqual([b.id]);
     expect(reopened.getObject(b.id).title).toBe(kernel.getObject(b.id).title);
   });
+
+  it("TST-KER-008d: a truncated last journal line is skipped at opening and its count is reported", async () => {
+    const { root, kernel } = await seededProject("truncated");
+    const journal = path.join(root, ".ipe", "journal.jsonl");
+    const whole = await fs.readFile(journal, "utf8");
+    const lines = whole.split("\n").filter((l) => l.trim() !== "");
+    const last = lines[lines.length - 1] ?? "";
+    expect(last.length).toBeGreaterThan(2);
+    // A crash in the middle of an append: the last line stops half way, without its newline.
+    await fs.writeFile(journal, `${whole}${last.slice(0, Math.floor(last.length / 2))}`, "utf8");
+    const reopened = await openProject(root);
+    expect(reopened.openReport.journalLinesSkipped).toBe(1);
+    expect(reopened.journalEvents().map((e) => e.id)).toEqual(kernel.journalEvents().map((e) => e.id));
+    expect(reopened.listObjects().map((o) => o.id).sort()).toEqual(kernel.listObjects().map((o) => o.id).sort());
+  });
 });

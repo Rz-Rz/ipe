@@ -1,9 +1,10 @@
 // The provenance kernel (SPEC-KER-001 to SPEC-KER-014, design note Sections 2 to 6).
 //
 // One instance holds one project: its manifest, the current text of every unit, the live
-// objects, the versions, the journal. Every mutation is persisted through the storage adapter
-// in the order blobs, objects, versions index, state, so that an interruption leaves the last
-// consistent state behind (state is written last). The kernel reaches no platform API.
+// objects, the versions, the journal. Every save is persisted through the storage adapter in
+// the order unit file, touched objects, blob, versions index, state, so that an interruption
+// leaves the last consistent state behind (state is written last). The kernel reaches no
+// platform API.
 
 import type { Adapters, Clock, Hash, Ids, Storage } from "./adapters.js";
 import { makeAnchor, resolveAnchor, sameAnchor, type UnitText } from "./anchors.js";
@@ -71,7 +72,7 @@ export class Kernel {
   static async create(adapters: Adapters, name: string): Promise<Kernel> {
     if (await adapters.storage.exists(MANIFEST)) throw new KernelError("project_exists", `${MANIFEST} already exists`);
     const manifest: Manifest = { schema: 1, name, units: [] };
-    const report: OpenReport = { externalChanges: [], interrupted: false, historyUnreadable: false, missingUnits: [], unreadableObjects: [], anchorChanges: [] };
+    const report: OpenReport = { externalChanges: [], interrupted: false, historyUnreadable: false, missingUnits: [], unreadableObjects: [], journalLinesSkipped: 0, anchorChanges: [] };
     const kernel = new Kernel(adapters, manifest, { schema: 1, version: null, units: {} }, report);
     await kernel.storage.write(MANIFEST, canonicalJson(manifest));
     await kernel.recordVersion("create", null);
@@ -84,7 +85,7 @@ export class Kernel {
     const manifestText = await storage.read(MANIFEST);
     if (manifestText === null) throw new KernelError("no_project", `${MANIFEST} not found`);
     const manifest = parseManifest(manifestText);
-    const report: OpenReport = { externalChanges: [], interrupted: false, historyUnreadable: false, missingUnits: [], unreadableObjects: [], anchorChanges: [] };
+    const report: OpenReport = { externalChanges: [], interrupted: false, historyUnreadable: false, missingUnits: [], unreadableObjects: [], journalLinesSkipped: 0, anchorChanges: [] };
 
     let state: State = { schema: 1, version: null, units: {} };
     const stateText = await storage.read(STATE);
@@ -140,7 +141,11 @@ export class Kernel {
     }
 
     const journalText = await storage.read(JOURNAL);
-    if (journalText !== null) kernel.events = parseEvents(journalText).events;
+    if (journalText !== null) {
+      const parsed = parseEvents(journalText);
+      kernel.events = parsed.events;
+      report.journalLinesSkipped = parsed.skipped;
+    }
 
     const last = kernel.history[kernel.history.length - 1];
     if (last !== undefined && state.version !== last.id) report.interrupted = true;
@@ -263,8 +268,10 @@ export class Kernel {
       if (external !== null) throw new KernelError("conflict", `unit ${unitId} changed on disk since it was read: read externalText, then write with force to keep yours`);
     }
     if (previous === text) return { version: this.currentVersion(), invalidated: [], anchorChanges: [] };
-    this.texts.set(unitId, text);
+    // The disk first: a write the storage refuses leaves the kernel's text as it was, so that the
+    // next save is neither a false conflict nor a silent no-op (SPEC-KER-012, SPEC-KER-009).
     await this.storage.write(node.path, text);
+    this.texts.set(unitId, text);
     const changes = this.reanchor(new Set([unitId]));
     await this.persistTouched(changes.touched);
     const version = await this.recordVersion("write", unitId);

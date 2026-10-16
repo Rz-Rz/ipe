@@ -6,8 +6,8 @@ This document describes everything IPE writes inside a project folder, completel
 
 1. A project is one folder. Nothing about the project lives outside it.
 2. The manuscript is plain Markdown files, one per unit, readable by any editor. IPE never rewrites a unit's text except through the author's own save.
-3. Everything IPE records about the work lives under `.ipe/`, in JSON text files with keys sorted at every level, two-space indentation, and one trailing newline.
-4. Every write is atomic: a file is either its previous content or its new content, never a mixture. A save writes blobs, then objects, then the versions index, then the state, in that order; the state is the last consistent snapshot.
+3. Everything IPE records about the work lives under `.ipe/`, in JSON text files with keys sorted at every level, two-space indentation, and one trailing newline. The one exception is the journal (Section 6): each of its lines is one compact JSON object, with the keys in the order the kernel writes them.
+4. Every write is atomic: a file is either its previous content or its new content, never a mixture. A save writes the unit's file, then the objects it touched, then the blob of the new content, then the versions index, then the state, in that order; the state is the last consistent snapshot. A write interrupted between its temporary file and the rename can leave a file named `<target>.<pid>.<time>.<random>.tmp` beside the target: IPE ignores such files, and a reader ignores every file whose name ends in `.tmp`.
 5. Unit contents are stored by content hash (SHA-256 of the UTF-8 bytes, lowercase hexadecimal), so every earlier state of every unit is recoverable and identical content is stored once.
 
 ## 2. `ipe.json`, the manifest
@@ -72,7 +72,7 @@ A file under `.ipe/objects/` that is not valid JSON is reported by name when the
 ]
 ```
 
-- `id`: the version identifier objects refer to. `at`: ISO-8601 UTC. `action`: what produced it (`create`, `write`, `external`, `add-unit`).
+- `id`: the version identifier objects refer to. `at`: ISO-8601 UTC. `action`: what produced it (`create` for the project, `write` for a save, `external` for an edit absorbed at opening, `add-unit` for a new unit, `adopt-unit` for an existing file registered as a unit).
 - `units`: for every unit at that moment, its content hash.
 
 An `index.json` that cannot be read is kept, as found, under `index.json.unreadable-<time>` before a fresh index replaces it at the next save; a reader may ignore those files.
@@ -89,7 +89,7 @@ One JSON object per line, appended, never rewritten:
 
 - `kind`: one of `create`, `edit`, `accept`, `reject`, `delete`, `undo`, `refresh`, `refused`.
 - `before` and `after`: full snapshots of the object (Section 4), or `null`. Undo restores `before`.
-- A line that is not JSON is skipped and counted when the project opens.
+- A line that is not an event (a last line cut by a crash in the middle of an append) is skipped when the project opens, and the count of skipped lines is reported to the caller (`journalLinesSkipped` in the opening report).
 
 ## 7. `.ipe/state.json`, the last consistent state
 
@@ -105,10 +105,10 @@ Written last by every save. `units` holds the content hash of every unit as last
 2. Read each unit file as UTF-8 text.
 3. List `.ipe/objects/`; parse each `*.json`; a passage is `unit text`.slice(`start`, `end`) for an anchor in state `intact` or `changed`.
 4. Read `.ipe/versions/index.json`; for any version and unit, read `.ipe/versions/blobs/<hash>`.
-5. Read `.ipe/journal.jsonl` line by line for the history of each object.
+5. Read `.ipe/journal.jsonl` line by line for the history of each object; skip a line that does not parse.
 6. Read `.ipe/state.json` to know whether the folder is consistent with the last save.
 
-Nothing else is needed. The test `TST-KER-008a` is such a reader, written from this document, and it reads a project IPE wrote.
+Nothing else is needed, and every file whose name ends in `.tmp` is ignored (Section 1, item 4). The test `TST-KER-008a` is such a reader, written from this document, and it reads a project IPE wrote.
 
 ## 9. Compatibility
 

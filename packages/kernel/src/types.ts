@@ -188,6 +188,8 @@ export interface OpenReport {
   missingUnits: UnitId[];
   /** Object files that are not JSON: reported by path and skipped. */
   unreadableObjects: string[];
+  /** Journal lines that are not an event (a last line cut by a crash in an append): skipped, and counted here. */
+  journalLinesSkipped: number;
   anchorChanges: AnchorChange[];
 }
 

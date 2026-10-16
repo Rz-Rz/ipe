@@ -92,17 +92,30 @@ describe("SPEC-KER-012 Consistent state after interruption", () => {
     expect(reopened.openReport.externalChanges).toEqual([]);
   });
 
-  it("TST-KER-012b: with the disk full, the write is refused and the previous state is intact", async () => {
+  it("TST-KER-012b: with the disk full, the write is refused, the previous state is intact, and the same kernel saves again once there is room", async () => {
     const { root, unit } = await seeded("disk-full");
     const { kernel, faulty } = await faultyKernel(root);
     const full = Object.assign(new Error("ENOSPC: no space left on device"), { code: "ENOSPC" });
+    const longer = "A longer text that will not fit.";
     faulty.error = full;
     faulty.failAt = 1;
-    await expect(kernel.writeUnit(unit.id, "A longer text that will not fit.")).rejects.toMatchObject({ code: "ENOSPC" });
+    await expect(kernel.writeUnit(unit.id, longer)).rejects.toMatchObject({ code: "ENOSPC" });
     const reopened = await openProject(root);
     expect(reopened.openReport.externalChanges).toEqual([]);
     expect(reopened.openReport.interrupted).toBe(false);
     expect(reopened.readUnit(unit.id)).toBe(TEXT);
     expect(reopened.listObjects().length).toBe(1);
+    // The refused text was never written: the kernel still holds the text the disk holds, the disk
+    // is no external edit, and the retry is an ordinary save that lands.
+    expect(kernel.readUnit(unit.id)).toBe(TEXT);
+    expect(await kernel.externalText(unit.id)).toBeNull();
+    faulty.failAt = Number.POSITIVE_INFINITY;
+    const retry = await kernel.writeUnit(unit.id, longer);
+    expect(retry.version?.action).toBe("write");
+    expect(await fs.readFile(path.join(root, "chapter-1.md"), "utf8")).toBe(longer);
+    const afterRetry = await openProject(root);
+    expect(afterRetry.readUnit(unit.id)).toBe(longer);
+    expect(afterRetry.openReport.externalChanges).toEqual([]);
+    expect(afterRetry.openReport.interrupted).toBe(false);
   });
 });
