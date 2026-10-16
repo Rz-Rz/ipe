@@ -52,6 +52,12 @@ export class Kernel {
   private readonly written = new Map<ObjectId, string>();
   private history: Version[] = [];
   private unreadableIndexKept = false;
+  /**
+   * The units whose last save did not complete: a unit enters once its file is written and leaves
+   * once the state of that save is written. A refused save leaves its unit here, and the next save
+   * of the same text in the same kernel runs whole, whatever was saved in between (SPEC-KER-012).
+   */
+  private incomplete = new Set<UnitId>();
   private events: Event[] = [];
   private state: State;
   readonly openReport: OpenReport;
@@ -285,14 +291,22 @@ export class Kernel {
       const external = await this.externalText(unitId);
       if (external !== null) throw new KernelError("conflict", `unit ${unitId} changed on disk since it was read: read externalText, then write with force to keep yours`);
     }
-    if (previous === text) return { version: this.currentVersion(), invalidated: [], anchorChanges: [] };
+    // A text already held is saved again only when the last save did not complete: a refusal past
+    // the unit's file leaves the objects, the blob, the index or the state behind (SPEC-KER-012).
+    const retry = this.incomplete.has(unitId);
+    if (previous === text && !retry) return { version: this.currentVersion(), invalidated: [], anchorChanges: [] };
     // The disk first: a write the storage refuses leaves the kernel's text as it was, so that the
     // next save is neither a false conflict nor a silent no-op (SPEC-KER-012, SPEC-KER-009).
     await this.storage.write(node.path, text);
+    // From here the disk holds the new text: whatever is refused below leaves this save incomplete.
+    this.incomplete.add(unitId);
     this.texts.set(unitId, text);
     const changes = this.reanchor(new Set([unitId]));
-    await this.persistTouched(changes.touched);
+    // On a retry, every object whose file does not hold its current content is written again, not
+    // only the ones this re-anchoring touched: the refused write may have been another one's.
+    await this.persistTouched(retry ? new Set(this.objects.keys()) : changes.touched);
     const version = await this.recordVersion("write", unitId);
+    this.incomplete.delete(unitId);
     return { version, invalidated: changes.invalidated, anchorChanges: changes.anchorChanges };
   }
 
@@ -370,7 +384,14 @@ export class Kernel {
       if (broken !== null) await this.storage.write(`${VERSIONS_INDEX}.unreadable-${this.clock.now().replace(/[:.]/g, "-")}`, broken);
       this.unreadableIndexKept = true;
     }
-    await this.storage.write(VERSIONS_INDEX, canonicalJson(this.history));
+    try {
+      await this.storage.write(VERSIONS_INDEX, canonicalJson(this.history));
+    } catch (e) {
+      // The index does not hold the version, so the history must not either: the retry then records
+      // one version for one save, not a phantom beside it.
+      this.history.pop();
+      throw e;
+    }
     this.state = { schema: 1, version: version.id, units };
     await this.writeState();
     return clone(version);
