@@ -76,7 +76,28 @@ importers:
         specifier: workspace:*
         version: link:../kernel
 
+  packages/assistant:
+    dependencies:
+      '@ipe/kernel':
+        specifier: workspace:*
+        version: link:../kernel
+      '@ipe/providers':
+        specifier: workspace:*
+        version: link:../providers
+
   packages/kernel: {}
+
+  packages/providers:
+    dependencies:
+      '@ipe/kernel':
+        specifier: workspace:*
+        version: link:../kernel
+
+  packages/providers-claude:
+    dependencies:
+      '@ipe/providers':
+        specifier: workspace:*
+        version: link:../providers
 
 packages:
 
