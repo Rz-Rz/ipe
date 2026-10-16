@@ -1,0 +1,42 @@
+id: ENG-0004
+type: realisation
+titre: "Kernel: a save refused after the unit file landed completes at the next retry"
+promettant: null
+reserve_par: null
+pris_le: null
+restitue_le: null
+beneficiaire: jalon:J-KER
+exigences:
+  - SPEC-KER-012
+scope:
+  domaines:
+    - KER
+  paths:
+    - packages/kernel/**
+    - packages/adapters-node/**
+definition_of_done: >
+  1. After a save refused at any step after the unit's file was written (the touched
+  objects, the blob, the versions index, the state), a retry of the identical text in the
+  same kernel completes the save: the object files, the blob, the index and the state are
+  written and a new version is returned, instead of the early return that answers the
+  previous version and writes nothing. 2. TST-KER-012b is extended to a refusal injected at
+  each write step of the save, each followed by a retry of the same text in the same kernel,
+  and the reopened project then reports neither an external change nor an interruption.
+  3. The mutant that keeps the early return falls under that test. 4. REPORT.md opens with the
+  result against this definition and names the requirement with the tests that prove it.
+depends_on:
+  - eng: ENG-0003
+    type: finish-start
+echeance: null
+readiness: []
+readiness_ok: true
+contrat: null
+statut: propose
+variance: null
+remplace_par: null
+notes: >
+  2026-10-16: opened by the coordinator at the integration of ENG-0002, from the verdict
+  MAN-ENG-0002-2 (probes P2 and P7): after a refusal at steps 2 to 5 of a save, the kernel
+  holds the new text while the state is not on disk, and a same-text retry writes nothing.
+  Nothing is lost (a reopen absorbs the text as external), but the interface must be able to
+  save again without reopening. Sequenced after ENG-0003, which holds the kernel paths.
