@@ -1,0 +1,57 @@
+id: ENG-0006
+type: realisation
+titre: "Desktop: provider connection and key store, capability and cost panel, preview, ask action with failure states, provider switch"
+promettant: null
+reserve_par: null
+pris_le: null
+restitue_le: null
+beneficiaire: jalon:J-PRV
+exigences:
+  - SPEC-PRV-001
+  - SPEC-PRV-002
+  - SPEC-PRV-003
+  - SPEC-PRV-004
+  - SPEC-PRV-006
+  - SPEC-AST-001
+scope:
+  domaines:
+    - PRV
+    - AST
+  paths:
+    - apps/desktop/**
+    - e2e/**
+    - playwright.config.ts
+    - package.json
+    - pnpm-lock.yaml
+definition_of_done: >
+  1. The desktop application connects, tests and disconnects a provider with an author-supplied
+  key kept in the operating system's secret store through Electron's safeStorage, or in session
+  memory when it is unavailable, and never in the project folder nor in clear in any file; the
+  HTTP bridge keeps keys in memory. 2. The interface shows, per connection, its state, its
+  models, its capabilities and billing from the catalogue, and after each call the usage and the
+  estimate marked as such or "not reported"; it shows the preview of what an ask will send before
+  the first call; it runs the ask action on the chosen connection and model only, shows the
+  answer as a proposed object with its provenance, shows each failure state with retry and
+  abandon, lets the author cancel a running call, and lets the author edit the project's
+  instructions. 3. The tests TST-PRV-001a, 001b, 004a and TST-AST-001a exist under their names
+  and pass, in the browser against the bridge with the fake provider registered; the Electron
+  smoke test still passes. 4. A user can, in the running application: connect a key, read the
+  capabilities and the cost of a call, ask about a chapter and read the answer's provenance,
+  switch the provider; the report lists these gestures with the screenshots the tests captured.
+  5. REPORT.md opens with the result against this definition and names each requirement with
+  the tests that prove it.
+depends_on:
+  - eng: ENG-0004
+    type: finish-start
+  - eng: ENG-0005
+    type: finish-start
+echeance: null
+readiness: []
+readiness_ok: true
+contrat: null
+statut: propose
+variance: null
+remplace_par: null
+notes: >
+  2026-10-16: drafted by the coordinator with ENG-0005. Design note: docs/PROVIDER_DESIGN.md,
+  Sections 7 and 8. The live key of the operator is never written in a test or a fixture.

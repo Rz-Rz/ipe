@@ -1,0 +1,59 @@
+id: ENG-0005
+type: realisation
+titre: "Provider layer: contract, fake provider, context assembly and preview, call record, failure states, the Claude adapter, the ask action"
+promettant: null
+reserve_par: null
+pris_le: null
+restitue_le: null
+beneficiaire: jalon:J-PRV
+exigences:
+  - SPEC-PRV-002
+  - SPEC-PRV-003
+  - SPEC-PRV-005
+  - SPEC-PRV-006
+  - SPEC-PRV-007
+  - SPEC-AST-001
+scope:
+  domaines:
+    - PRV
+    - AST
+  paths:
+    - packages/providers/**
+    - packages/providers-claude/**
+    - packages/assistant/**
+    - package.json
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
+    - vitest.workspace.ts
+definition_of_done: >
+  1. packages/providers holds the provider contract (models, complete, with fetch injected and
+  an abort signal), the request and answer model, the catalogue format with source and date,
+  the failure states and their mapping rules, the context assembly from a kernel for a passage,
+  a unit and the project, the preview whose total equals the size of what is sent, and a fake
+  provider with deterministic answers and programmable failures; packages/providers-claude
+  implements the contract on the Claude provider's Messages API with a dated catalogue that
+  names its source, with request and response fixtures recorded as the API documents them;
+  packages/assistant holds the ask action: call record created before the request leaves,
+  answer object proposed and anchored to the scope with the record as dependency, failures and
+  cancellation written into the record and nothing else created. None of the three packages
+  imports a Node or DOM module. 2. The tests TST-PRV-002a, 002b, 003a, 003b, 004b, 005a, 005b,
+  006a, 006b, 007a, 007b and TST-AST-001b exist under their names and pass; TST-PRV-007b is
+  skipped and reported as not verified when no key is in the environment. 3. Every figure of
+  the catalogue carries its source and date; no price is written without them. 4. REPORT.md
+  opens with the result against this definition and names each requirement with the tests
+  that prove it, and states which tests of each requirement remain for ENG-0006.
+depends_on:
+  - eng: ENG-0003
+    type: finish-start
+echeance: null
+readiness: []
+readiness_ok: true
+contrat: null
+statut: propose
+variance: null
+remplace_par: null
+notes: >
+  2026-10-16: drafted by the coordinator when J-PRV reached the frontier. Design note:
+  docs/PROVIDER_DESIGN.md. Decision DA-0004 (first provider), default A in the operator's
+  absence. Runs beside ENG-0004, which holds the kernel paths: a kernel change this
+  commitment needs goes through eng request-change.
