@@ -7,7 +7,7 @@ Généré le 2026-10-16 par le coordinateur agentique. Ne pas éditer : toute co
 
 | Jalon | Exigences vertes | Engagements liés (tenus/total) | Chemin critique restant |
 |---|---|---|---|
-| J-KER | 14/20 | 2/3 | ENG-0003 |
+| J-KER | 14/20 | 2/4 | ENG-0003 -> ENG-0004 |
 | J-PRV | 0/0 | 0/0 | (aucun) |
 | J-MEM | 0/0 | 0/0 | (aucun) |
 | J-SYS | 0/0 | 0/0 | (aucun) |
@@ -31,7 +31,7 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ### En attente ou gelés
 
-- (aucun)
+- ENG-0004 [en_attente] : Kernel: a save refused after the unit file landed completes at the next retry (attend : ENG-0003)
 
 ## 3. Arbitrages et décisions (votre inbox)
 
@@ -45,3 +45,7 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 - dette documentaire : SPEC-KER-011 (impact déclaré par ENG-0001, non résorbé)
 - dette documentaire : SPEC-KER-012 (impact déclaré par ENG-0002, non résorbé)
 - dette documentaire : SPEC-KER-014 (impact déclaré par ENG-0001, non résorbé)
+- dette documentaire : SPEC-PRJ-001 (impact déclaré par ENG-0003, non résorbé)
+- dette documentaire : SPEC-PRJ-002 (impact déclaré par ENG-0003, non résorbé)
+- dette documentaire : SPEC-PRJ-003 (impact déclaré par ENG-0003, non résorbé)
+- dette documentaire : SPEC-PRJ-005 (impact déclaré par ENG-0003, non résorbé)

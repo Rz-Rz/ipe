@@ -1,0 +1,37 @@
+engagement: ENG-0003
+date: '2026-10-16T00:57:26+00:00'
+worktree: /home/ultimatron/projects/solo/wt/eng-0003
+checks:
+  rapport:
+    resultat: ok
+    detail: REPORT.md présent
+  closing:
+    resultat: ok
+    detail: REPORT.md declares PASS against the definition of done
+  remontee_spec:
+    resultat: ok
+    detail: SPEC_UPDATE.md couvre toutes les exigences
+  remontee_doc:
+    resultat: ok
+    detail: DOC_UPDATE.md couvre toutes les exigences
+  conformite_scope:
+    resultat: ok
+    detail: diff confiné au scope déclaré
+  registre:
+    resultat: ok
+    detail: 4 engagements, 0 erreur(s), 0 avertissement(s)
+  fraicheur:
+    resultat: ok
+    detail: aucune lecture périmée
+  charte:
+    resultat: ok
+    detail: no line introduced breaks the charter
+  mutants:
+    resultat: ok
+    detail: REPORT.md names the mutants it replayed, which the verifier replays in turn
+  tests:
+    resultat: a_verifier
+    detail: à rejouer par le verifier (jamais présumés ici)
+  verifier:
+    resultat: a_verifier
+    detail: verdict sémantique en attente
