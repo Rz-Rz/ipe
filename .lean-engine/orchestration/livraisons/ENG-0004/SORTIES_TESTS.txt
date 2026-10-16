@@ -4,38 +4,38 @@ $ pnpm -r --if-present typecheck
 $ tsc -p tsconfig.json && tsc -p tsconfig.test.json
 $ tsc -p tsconfig.json && tsc -p tsconfig.test.json
 $ tsc -p tsconfig.json && tsc -p tsconfig.main.json
-[lean essai] exit 0, 3630 ms, 2026-10-16T02:09:04+00:00
+[lean essai] exit 0, 4655 ms, 2026-10-16T02:24:48+00:00
 [lean essai] run
 $ pnpm test
 
  RUN  v2.1.9 /home/ultimatron/projects/solo/wt/eng-0004
 
  ✓ |@ipe/desktop| test/renderer-imports.test.ts (1 test) 6ms
- ✓ |@ipe/desktop| test/text.test.ts (2 tests) 2ms
- ✓ |@ipe/kernel| test/prj-005.test.ts (1 test) 6ms
- ✓ |@ipe/kernel| test/adopt.test.ts (2 tests) 7ms
- ✓ |@ipe/kernel| test/ker-014.test.ts (1 test) 9ms
- ✓ |@ipe/kernel| test/ker-010.test.ts (2 tests) 10ms
- ✓ |@ipe/kernel| test/ker-013.test.ts (2 tests) 12ms
- ✓ |@ipe/kernel| test/ker-004.test.ts (3 tests) 12ms
- ✓ |@ipe/kernel| test/ker-002.test.ts (2 tests) 13ms
- ✓ |@ipe/kernel| test/ker-006.test.ts (4 tests) 12ms
+ ✓ |@ipe/desktop| test/text.test.ts (2 tests) 3ms
+ ✓ |@ipe/kernel| test/ker-010.test.ts (2 tests) 9ms
+ ✓ |@ipe/kernel| test/prj-005.test.ts (1 test) 10ms
+ ✓ |@ipe/kernel| test/ker-013.test.ts (2 tests) 11ms
+ ✓ |@ipe/kernel| test/ker-004.test.ts (3 tests) 11ms
+ ✓ |@ipe/kernel| test/adopt.test.ts (2 tests) 9ms
+ ✓ |@ipe/kernel| test/ker-014.test.ts (1 test) 11ms
+ ✓ |@ipe/kernel| test/ker-002.test.ts (2 tests) 11ms
+ ✓ |@ipe/kernel| test/ker-006.test.ts (4 tests) 15ms
  ✓ |@ipe/kernel| test/ker-007.test.ts (3 tests) 15ms
- ✓ |@ipe/kernel| test/sha256.test.ts (2 tests) 33ms
- ✓ |@ipe/kernel| test/ker-005.test.ts (4 tests) 63ms
- ✓ |@ipe/kernel| test/ker-011.test.ts (2 tests) 61ms
- ✓ |@ipe/adapters-node| test/ker-009.test.ts (3 tests) 83ms
- ✓ |@ipe/kernel| test/ker-001.test.ts (3 tests) 95ms
- ✓ |@ipe/adapters-node| test/ker-008.test.ts (4 tests) 126ms
- ✓ |@ipe/kernel| test/ker-003.test.ts (8 tests) 145ms
- ✓ |@ipe/desktop| test/service.test.ts (7 tests) 152ms
- ✓ |@ipe/adapters-node| test/ker-012.test.ts (4 tests) 245ms
- ✓ |@ipe/adapters-node| test/prj-006.test.ts (2 tests) 286ms
+ ✓ |@ipe/kernel| test/sha256.test.ts (2 tests) 28ms
+ ✓ |@ipe/kernel| test/ker-005.test.ts (4 tests) 58ms
+ ✓ |@ipe/kernel| test/ker-011.test.ts (2 tests) 77ms
+ ✓ |@ipe/kernel| test/ker-001.test.ts (3 tests) 103ms
+ ✓ |@ipe/kernel| test/ker-003.test.ts (8 tests) 114ms
+ ✓ |@ipe/adapters-node| test/ker-009.test.ts (3 tests) 77ms
+ ✓ |@ipe/adapters-node| test/ker-008.test.ts (4 tests) 140ms
+ ✓ |@ipe/desktop| test/service.test.ts (7 tests) 149ms
+ ✓ |@ipe/adapters-node| test/prj-006.test.ts (2 tests) 267ms
+ ✓ |@ipe/adapters-node| test/ker-012.test.ts (5 tests) 275ms
 
  Test Files  21 passed (21)
-      Tests  62 passed (62)
-   Start at  04:09:05
-   Duration  746ms (transform 944ms, setup 0ms, collect 3.08s, tests 1.39s, environment 4ms, prepare 1.83s)
+      Tests  63 passed (63)
+   Start at  04:24:49
+   Duration  796ms (transform 1.17s, setup 0ms, collect 3.27s, tests 1.40s, environment 4ms, prepare 1.84s)
 
 $ vitest run
-[lean essai] exit 0, 1025 ms, 2026-10-16T02:09:05+00:00
+[lean essai] exit 0, 1102 ms, 2026-10-16T02:24:50+00:00

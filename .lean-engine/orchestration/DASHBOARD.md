@@ -7,16 +7,16 @@ Généré le 2026-10-16 par le coordinateur agentique. Ne pas éditer : toute co
 
 | Jalon | Exigences vertes | Engagements liés (tenus/total) | Chemin critique restant |
 |---|---|---|---|
-| J-KER | 20/20 | 3/4 | ENG-0004 |
-| J-PRV | 0/8 | 0/2 | ENG-0004 -> ENG-0006 |
-| J-MEM | 0/8 | 0/2 | ENG-0004 -> ENG-0006 -> ENG-0008 |
+| J-KER | 20/20 | 4/4 | (aucun) |
+| J-PRV | 0/8 | 0/2 | ENG-0005 -> ENG-0006 |
+| J-MEM | 0/8 | 0/2 | ENG-0005 -> ENG-0006 -> ENG-0008 |
 | J-SYS | 0/0 | 0/0 | (aucun) |
 | J-CHR | 0/0 | 0/0 | (aucun) |
 | J-REV | 0/0 | 0/0 | (aucun) |
 | J-GEN | 0/0 | 0/0 | (aucun) |
 | J-PUB | 0/0 | 0/0 | (aucun) |
 
-PPC (promesses tenues) : 100 % (3/3)
+PPC (promesses tenues) : 100 % (4/4)
 Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ## 2. Réseau d'engagements
@@ -27,7 +27,6 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ### En vol
 
-- ENG-0004 : Kernel: a save refused after the unit file landed completes at the next retry ; promettant coordinator-session, réservé par Karim Dhrif <karimdhrif4444@gmail.com>, pris le 2026-10-16T02:02:09+00:00
 - ENG-0005 : Provider layer: contract, fake provider, context assembly and preview, call record, failure states, the Claude adapter, the ask action ; promettant coordinator-session, réservé par Karim Dhrif <karimdhrif4444@gmail.com>, pris le 2026-10-16T02:02:13+00:00
 
 ### En attente ou gelés

@@ -31,7 +31,8 @@ echeance: null
 readiness: []
 readiness_ok: true
 contrat: null
-statut: pris
+statut: tenu
+tenu_le: '2026-10-16T02:33:15+00:00'
 variance: null
 remplace_par: null
 notes: >
