@@ -118,4 +118,32 @@ describe("SPEC-KER-012 Consistent state after interruption", () => {
     expect(afterRetry.openReport.externalChanges).toEqual([]);
     expect(afterRetry.openReport.interrupted).toBe(false);
   });
+
+  it("TST-KER-012d: a save refused at any write step, the unit file included, completes when the same text is saved again in the same kernel", async () => {
+    const probe = await seeded("retry-probe");
+    const { kernel: probeKernel, faulty: counter } = await faultyKernel(probe.root);
+    const longer = `${TEXT} And then the rain.`;
+    await probeKernel.writeUnit(probe.unit.id, longer);
+    const steps = counter.count;
+    expect(steps).toBeGreaterThanOrEqual(4);
+    for (let failAt = 1; failAt <= steps; failAt++) {
+      const { root, unit } = await seeded(`retry-${failAt}`);
+      const { kernel, faulty } = await faultyKernel(root);
+      faulty.failAt = failAt;
+      await expect(kernel.writeUnit(unit.id, longer)).rejects.toThrow("injected interruption");
+      faulty.failAt = Number.POSITIVE_INFINITY;
+      // The same text again, in the same kernel: the save runs whole and returns a version of its own.
+      const retried = await kernel.writeUnit(unit.id, longer);
+      expect(retried.version?.action, `step ${failAt}`).toBe("write");
+      const reopened = await openProject(root);
+      expect(reopened.readUnit(unit.id), `step ${failAt}`).toBe(longer);
+      expect(reopened.openReport.externalChanges, `step ${failAt}`).toEqual([]);
+      expect(reopened.openReport.interrupted, `step ${failAt}`).toBe(false);
+      expect(reopened.listObjects().length, `step ${failAt}`).toBe(1);
+      expect(reopened.currentVersion()?.id, `step ${failAt}`).toBe(retried.version?.id);
+      // Saved once, the same text is a no-op again: no new version for nothing.
+      const again = await kernel.writeUnit(unit.id, longer);
+      expect(again.version?.id, `step ${failAt}`).toBe(retried.version?.id);
+    }
+  });
 });

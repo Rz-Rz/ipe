@@ -52,6 +52,8 @@ export class Kernel {
   private readonly written = new Map<ObjectId, string>();
   private history: Version[] = [];
   private unreadableIndexKept = false;
+  /** True from the first write of a save until its state is written: a refused save leaves it true, and the next save runs whole. */
+  private incomplete = false;
   private events: Event[] = [];
   private state: State;
   readonly openReport: OpenReport;
@@ -285,7 +287,10 @@ export class Kernel {
       const external = await this.externalText(unitId);
       if (external !== null) throw new KernelError("conflict", `unit ${unitId} changed on disk since it was read: read externalText, then write with force to keep yours`);
     }
-    if (previous === text) return { version: this.currentVersion(), invalidated: [], anchorChanges: [] };
+    // A text already held is saved again only when the last save did not complete: a refusal past
+    // the unit's file leaves the objects, the blob, the index or the state behind (SPEC-KER-012).
+    if (previous === text && !this.incomplete) return { version: this.currentVersion(), invalidated: [], anchorChanges: [] };
+    this.incomplete = true;
     // The disk first: a write the storage refuses leaves the kernel's text as it was, so that the
     // next save is neither a false conflict nor a silent no-op (SPEC-KER-012, SPEC-KER-009).
     await this.storage.write(node.path, text);
@@ -373,6 +378,7 @@ export class Kernel {
     await this.storage.write(VERSIONS_INDEX, canonicalJson(this.history));
     this.state = { schema: 1, version: version.id, units };
     await this.writeState();
+    this.incomplete = false;
     return clone(version);
   }
 
