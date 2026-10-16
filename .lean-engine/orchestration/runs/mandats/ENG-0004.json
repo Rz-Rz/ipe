@@ -5,7 +5,9 @@
   "diff_empreinte": "sha256:bb134f56f5283c5d7f58d277215f556fb9376d84baf255822ba66b55b9ce7bc8",
   "emis_le": "2026-10-16T02:23:44+00:00",
   "echeance": "2026-10-16T04:23:44+00:00",
-  "statut": "ouvert",
+  "statut": "rendu",
   "master_sha": "0538c6897c0c5415dcc890848c34ee52db917f2e",
-  "branch_commit": "3d54dd8"
+  "branch_commit": "3d54dd8",
+  "rendu_le": "2026-10-16T02:33:15+00:00",
+  "verdict": "approve"
 }
