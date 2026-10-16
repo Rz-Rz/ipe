@@ -7,3 +7,11 @@ claims:
   eng: ENG-0004
   owner: coordinator-session
   expires: 2026-10-20T02:02+00:00
+- domaine: PRV
+  eng: ENG-0005
+  owner: coordinator-session
+  expires: 2026-10-20T02:02+00:00
+- domaine: AST
+  eng: ENG-0005
+  owner: coordinator-session
+  expires: 2026-10-20T02:02+00:00

@@ -23,11 +23,12 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ### Frontière (prêt à tirer, trié par poids de déblocage)
 
-- ENG-0005 (débloque 3) : Provider layer: contract, fake provider, context assembly and preview, call record, failure states, the Claude adapter, the ask action
+- (vide)
 
 ### En vol
 
 - ENG-0004 : Kernel: a save refused after the unit file landed completes at the next retry ; promettant coordinator-session, réservé par Karim Dhrif <karimdhrif4444@gmail.com>, pris le 2026-10-16T02:02:09+00:00
+- ENG-0005 : Provider layer: contract, fake provider, context assembly and preview, call record, failure states, the Claude adapter, the ask action ; promettant coordinator-session, réservé par Karim Dhrif <karimdhrif4444@gmail.com>, pris le 2026-10-16T02:02:13+00:00
 
 ### En attente ou gelés
 

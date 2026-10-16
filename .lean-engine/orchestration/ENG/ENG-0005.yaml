@@ -1,9 +1,9 @@
 id: ENG-0005
 type: realisation
 titre: "Provider layer: contract, fake provider, context assembly and preview, call record, failure states, the Claude adapter, the ask action"
-promettant: null
-reserve_par: null
-pris_le: null
+promettant: "coordinator-session"
+reserve_par: "Karim Dhrif <karimdhrif4444@gmail.com>"
+pris_le: '2026-10-16T02:02:13+00:00'
 restitue_le: null
 beneficiaire: jalon:J-PRV
 exigences:
@@ -49,7 +49,7 @@ echeance: null
 readiness: []
 readiness_ok: true
 contrat: null
-statut: propose
+statut: pris
 variance: null
 remplace_par: null
 notes: >
