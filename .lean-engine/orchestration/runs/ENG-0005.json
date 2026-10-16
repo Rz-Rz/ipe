@@ -1,0 +1,66 @@
+{
+  "eng": "ENG-0005",
+  "kind": "session",
+  "token": "NmeAOS10dme_jiMD-4KMFgGJ0-SoqY2X",
+  "state": "active",
+  "promettant": "coordinator-session",
+  "reserve_par": "Karim Dhrif <karimdhrif4444@gmail.com>",
+  "worktree": "/home/ultimatron/projects/solo/wt/eng-0005",
+  "branch": "eng/eng-0005",
+  "issued_at": "2026-10-16T02:02:13+00:00",
+  "expires_at": "2026-10-20T02:02:13+00:00",
+  "last_seen": "2026-10-16T02:09:45+00:00",
+  "events": [
+    {
+      "at": "2026-10-16T02:02:13+00:00",
+      "note": "pull par coordinator-session"
+    },
+    {
+      "at": "2026-10-16T02:09:45+00:00",
+      "note": "livraison poussée"
+    }
+  ],
+  "revoked_at": null,
+  "revoke_motif": null,
+  "numero_cloture": 1,
+  "lectures": [
+    {
+      "ressource": "constitution",
+      "empreinte": "sha256:878b1170395ebcdd26b901aa03ea4da2"
+    },
+    {
+      "ressource": "spec:SPEC-PRV-002",
+      "empreinte": "sha256:9e41e5b065da77d2ed42ddb820506dfb"
+    },
+    {
+      "ressource": "spec:SPEC-PRV-003",
+      "empreinte": "sha256:eaec9714005b18aceaf9723e976f91b2"
+    },
+    {
+      "ressource": "spec:SPEC-PRV-005",
+      "empreinte": "sha256:a1efcdb57add058b135e131e5ba11f46"
+    },
+    {
+      "ressource": "spec:SPEC-PRV-006",
+      "empreinte": "sha256:13d1c059c0c995f042e044b10058331d"
+    },
+    {
+      "ressource": "spec:SPEC-PRV-007",
+      "empreinte": "sha256:b99b0c3a74cf80e3f6cab0edac61e09e"
+    },
+    {
+      "ressource": "spec:SPEC-AST-001",
+      "empreinte": "sha256:dd0121c5a821580a0ed0897ab9fd9855"
+    }
+  ],
+  "updated_at": "2026-10-16T02:27:00+00:00",
+  "livraison_sha": "bda76c0a7802473471be190f4074c17f5a3c4a52",
+  "livraison_le": "2026-10-16T02:09:48+00:00",
+  "rejets_consecutifs": 0,
+  "dernier_verdict": {
+    "mandat": "MAN-ENG-0005-1",
+    "sens": "reject",
+    "le": "2026-10-16T02:27:00+00:00",
+    "mineur": true
+  }
+}

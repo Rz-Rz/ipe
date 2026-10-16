@@ -1,0 +1,13 @@
+{
+  "mandat": "MAN-ENG-0002-2",
+  "eng": "ENG-0002",
+  "jeton": "Nt9YyJUq8RpWU9js4pY3kvzr-ntGgXiV",
+  "diff_empreinte": "sha256:be0f3afe81b86df0cc988cc1eea3064e363bbd9ec49fe02ab5dfb0ee6f65d521",
+  "emis_le": "2026-10-16T00:36:27+00:00",
+  "echeance": "2026-10-16T02:36:27+00:00",
+  "statut": "rendu",
+  "master_sha": "5e6be37ccb8eedba1ac93d0c493808a0f5b47bb5",
+  "branch_commit": "0478347",
+  "rendu_le": "2026-10-16T00:49:19+00:00",
+  "verdict": "approve"
+}
