@@ -1,0 +1,54 @@
+id: ENG-0009
+type: realisation
+titre: "Kernel: an object created against a named version, so that an answer whose scoped text changed during the call is anchored to the text sent and marked stale"
+promettant: null
+reserve_par: null
+pris_le: null
+restitue_le: null
+beneficiaire: jalon:J-PRV
+exigences:
+  - SPEC-AST-001
+  - SPEC-KER-004
+scope:
+  domaines:
+    - KER
+    - AST
+  paths:
+    - packages/kernel/**
+    - packages/assistant/**
+definition_of_done: >
+  1. CreateObjectInput takes the version the object rests on; the kernel reads
+  the anchors' text from that version and computes their state and stale
+  against the current version at creation, exactly as it does for an object
+  whose text changes afterwards; an absent version means the current one, as
+  today. 2. The ask action passes the version it read, so that an answer whose
+  scoped text changed during the call is anchored to the text sent and marked
+  stale. 3. A named test of the degraded case of SPEC-AST-001 proves it through
+  the ask action with the fake provider: the unit's text changes while the
+  provider answers, the answer's anchors carry the text sent and stale is true;
+  the kernel's own tests of SPEC-KER-004 cover the new input. 4. The truncated
+  title of a call record or an answer ends with no ellipsis character (the
+  writing charter names ellipses): a three-character cut or no marker. 5. The
+  coverage note of SPEC-AST-001 (degraded case, stated as not met by ENG-0005)
+  and Section 5 of docs/PROVIDER_DESIGN.md are corrected by the delivery, and
+  REPORT.md opens with the result against this definition and names each
+  requirement with the tests that prove it.
+echeance: null
+readiness: []
+readiness_ok: true
+depends_on:
+  - eng: ENG-0005
+    type: finish-start
+contrat: null
+statut: propose
+variance: null
+remplace_par: null
+notes: >
+  2026-10-16: drafted by the coordinator from open point 2 of the delivery
+  report of ENG-0005 (held the same day), after the verdict MAN-ENG-0005-1
+  found the degraded case of SPEC-AST-001 not met: the kernel creates objects
+  against the current version only, so the answer of a call during which the
+  text changed is anchored to the new text and not marked stale. The report
+  recommends this work before ENG-0006 takes the interface; no precedence was
+  added on ENG-0006, since its e2e test does not exercise the degraded case,
+  and the operator decides the sequencing.
