@@ -6,7 +6,7 @@ Each milestone is a set of requirements of the requirements folder. A milestone 
 |---|---|---|
 | J-KER | Provenance kernel and local project on disk, without assistant | SPEC-KER-001, SPEC-KER-002, SPEC-KER-003, SPEC-KER-004, SPEC-KER-005, SPEC-KER-006, SPEC-KER-007, SPEC-KER-008, SPEC-KER-009, SPEC-KER-010, SPEC-KER-011, SPEC-KER-012, SPEC-KER-013, SPEC-KER-014, SPEC-PRJ-001, SPEC-PRJ-002, SPEC-PRJ-003, SPEC-PRJ-004, SPEC-PRJ-005, SPEC-PRJ-006 |
 | J-PRV | Provider connection with author-supplied access, visible cost, no silent switching | SPEC-PRV-001, SPEC-PRV-002, SPEC-PRV-003, SPEC-PRV-004, SPEC-PRV-005, SPEC-PRV-006, SPEC-PRV-007, SPEC-AST-001 |
-| J-MEM | Project memory with provenance and the provenance question | to be specified in domain MEM |
+| J-MEM | Project memory with provenance and the provenance question | SPEC-MEM-001, SPEC-MEM-002, SPEC-MEM-003, SPEC-MEM-004, SPEC-MEM-005, SPEC-MEM-006, SPEC-MEM-007, SPEC-AST-002 |
 | J-SYS | Story-time-correct status windows | to be specified in domain SYS |
 | J-CHR | Chronology, location, and knowledge checks with evidence | to be specified in domain CHR |
 | J-REV | Revision impact before committing a change | to be specified in domain REV |
