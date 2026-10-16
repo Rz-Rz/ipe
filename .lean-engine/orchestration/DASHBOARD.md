@@ -7,7 +7,7 @@ Généré le 2026-10-16 par le coordinateur agentique. Ne pas éditer : toute co
 
 | Jalon | Exigences vertes | Engagements liés (tenus/total) | Chemin critique restant |
 |---|---|---|---|
-| J-KER | 14/20 | 3/4 | ENG-0004 |
+| J-KER | 20/20 | 3/4 | ENG-0004 |
 | J-PRV | 0/8 | 0/2 | ENG-0004 -> ENG-0006 |
 | J-MEM | 0/8 | 0/2 | ENG-0004 -> ENG-0006 -> ENG-0008 |
 | J-SYS | 0/0 | 0/0 | (aucun) |
@@ -24,11 +24,10 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 ### Frontière (prêt à tirer, trié par poids de déblocage)
 
 - ENG-0005 (débloque 3) : Provider layer: contract, fake provider, context assembly and preview, call record, failure states, the Claude adapter, the ask action
-- ENG-0004 (débloque 2) : Kernel: a save refused after the unit file landed completes at the next retry
 
 ### En vol
 
-- (aucun)
+- ENG-0004 : Kernel: a save refused after the unit file landed completes at the next retry ; promettant coordinator-session, réservé par Karim Dhrif <karimdhrif4444@gmail.com>, pris le 2026-10-16T02:02:09+00:00
 
 ### En attente ou gelés
 
@@ -42,12 +41,6 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ## 4. Anomalies
 
-- dérive spec : SPEC-PRJ-001 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-PRJ-002 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-PRJ-003 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-PRJ-004 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-PRJ-005 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
-- dérive spec : SPEC-PRJ-006 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
 - dette documentaire : SPEC-KER-003 (impact déclaré par ENG-0001, non résorbé)
 - dette documentaire : SPEC-KER-008 (impact déclaré par ENG-0002, non résorbé)
 - dette documentaire : SPEC-KER-009 (impact déclaré par ENG-0002, non résorbé)
