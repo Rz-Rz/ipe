@@ -69,22 +69,33 @@ interface Hash { sha256(text): string }
 
 ## 7. Interface (SPEC-PRJ-001 to 006)
 
-The renderer shows an outline (the manifest tree, reorderable), an editor (CodeMirror 6 with Markdown and the Vim extension available), a save state indicator (saved, unsaved, conflict), a search panel, and an inspector that answers the provenance query for any object. It calls `IpeApi` only:
+The interface (`apps/desktop/src/renderer/`) shows an outline (the manifest tree, reorderable: rename, move up, move down, move under the previous unit, move out after its parent, add a child unit), an editor (CodeMirror 6 with Markdown and the Vim extension behind a checkbox), a save state indicator, a search panel, and an inspector that answers the provenance query for any object. It imports no Node, Electron or adapter module, the kernel as types only, and calls the one contract of `apps/desktop/src/api.ts`:
 
 ```ts
 interface IpeApi {
-  openProject(path): Promise<ProjectView>;
-  readUnit(unitId): Promise<string>;
-  writeUnit(unitId, text, { force? }): Promise<SaveResult | ConflictResult>;   // invalidated objects and anchor changes; a conflict when the disk changed since the text was read, unless forced
-  externalText(unitId): Promise<string | null>;         // the disk text when it differs from the last known one
-  moveUnit(unitId, parentId, index): Promise<ProjectView>;
-  search(term): Promise<Hit[]>;
-  objects(filter?): Promise<ObjectSummary[]>;
+  createProject(root, name): Promise<ProjectView>;              // the folder is created when absent and must hold no project
+  openProject(root): Promise<ProjectView>;                      // a folder of Markdown files without manifest is adopted, nothing rewritten
+  current(): Promise<ProjectView | null>;
+  readUnit(unitId): Promise<UnitText>;                          // the text and its content hash
+  writeUnit(unitId, text, { force? }): Promise<SaveResult | ConflictResult>;   // a conflict carries both texts; force keeps the author's
+  takeDisk(unitId): Promise<UnitText>;                          // the disk's text taken as the unit's text after a conflict (kernel takeExternal)
+  addUnit(title, parentId): Promise<UnitNode>;
+  renameUnit(unitId, title): Promise<UnitNode[]>;
+  moveUnit(unitId, parentId, index): Promise<MoveResult>;       // the units, and the count of live objects the move carried, descendants included
+  search(term): Promise<SearchResult>;                          // the first 200 hits and the total; the kernel returns every occurrence
+  objects(): Promise<IpeObject[]>;
+  createObject(input, actor): Promise<IpeObject>;
+  acceptObject(objectId) / rejectObject(objectId): Promise<IpeObject>;
+  deleteObject(objectId): Promise<void>;                        // a tombstone, as the author
   explain(objectId): Promise<ProvenanceChain>;
-  counts(): Promise<Counts>;           // counts by anchor state are counts of objects; anchor counts stand beside
-  accept(objectId) / reject(objectId) / undo(eventId)
+  counts(): Promise<Counts>;                                    // counts by anchor state are counts of objects; anchor counts stand beside
+  versions(): Promise<Version[]>;
 }
 ```
+
+The contract is carried by two transports that run the same service (`apps/desktop/src/main/service.ts`, one open project on the kernel and the Node adapters). In the application, Electron's message channel: the preload exposes `window.ipe`, one function per call, with `contextIsolation` and `sandbox` on and no `nodeIntegration`; `window.ipeShell` adds the native folder dialog and the project the application was started on (`IPE_OPEN_PROJECT`). For the tests and for a browser, a local HTTP bridge on the loopback (`POST /api/<method>` with `{ "args": [...] }`, `GET /health`), which the page takes from `?bridge=<url>` or `VITE_BRIDGE`. Errors cross both transports as data (`{ ok: false, error: { code, message } }`) and keep their code on the interface side. `IPE_RENDERER_URL` points the window at the Vite server during development; `IPE_BRIDGE_PORT` exposes the bridge from the application.
+
+The save state is one of saved, unsaved, conflict. A change marks the unit unsaved and schedules one save, bound to the unit and the text of that change, 600 ms after the last change; an edit reverted within the interval cancels it; a unit is left only once its pending save ran, and the author stays on a unit whose save is refused or in conflict; saves run one after the other; a load of a unit into the editor schedules nothing. A save answered as a conflict shows both texts and two gestures, Keep mine (saves with force) and Take the disk version (the kernel's `takeExternal`: the disk's text taken, re-anchored, an external version recorded); nothing is written until the author chooses. A save the platform refuses leaves the state unsaved, keeps the text on screen, shows the reason and offers Retry; the next change retries as well. The editor splits and joins a unit on the unit's own line break (CRLF when every line break is CRLF, LF otherwise) and keeps every other byte as a character, so every unit comes back byte-identical; a line break the author types follows that separator; a unit that mixes line endings is announced. A hit of the search in a unit selects the passage in the editor (positions mapped for CRLF units); a hit in an object opens the inspector on it; when the list was cut, the panel says how many hits there are in all. A rename is an input in place in the outline. The kernel's `undo` is not exposed by this interface yet; it belongs with the review surface of a later milestone.
 
 ## 8. Tests
 
