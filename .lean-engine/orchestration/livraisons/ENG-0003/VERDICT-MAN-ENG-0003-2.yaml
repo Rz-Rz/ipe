@@ -1,0 +1,10 @@
+verdict: approve
+mandat: MAN-ENG-0003-2
+diff_empreinte: sha256:ac3cd5b5d3fb0a060c54b21d03cd3484ca7a37bc8e68fe73236ae2a97dd08c9d
+violations: []
+par_exigence: {"SPEC-PRJ-001":"couverte","SPEC-PRJ-002":"couverte","SPEC-PRJ-003":"couverte","SPEC-PRJ-004":"couverte","SPEC-PRJ-005":"couverte","SPEC-PRJ-006":"couverte"}
+tests: {"executes":70,"verts":70,"non_verifiables":[]}
+tests_cites: ["pnpm typecheck","pnpm test","pnpm --filter @ipe/desktop build","pnpm e2e"]
+motif_arbitrage: null
+mineur: false
+depose_le: '2026-10-16T01:53:53+00:00'
