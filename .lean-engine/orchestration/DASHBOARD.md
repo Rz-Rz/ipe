@@ -7,33 +7,34 @@ Généré le 2026-10-16 par le coordinateur agentique. Ne pas éditer : toute co
 
 | Jalon | Exigences vertes | Engagements liés (tenus/total) | Chemin critique restant |
 |---|---|---|---|
-| J-KER | 14/20 | 2/4 | ENG-0003 -> ENG-0004 |
-| J-PRV | 0/8 | 0/2 | ENG-0003 -> ENG-0004 -> ENG-0006 |
-| J-MEM | 0/0 | 0/0 | (aucun) |
+| J-KER | 14/20 | 3/4 | ENG-0004 |
+| J-PRV | 0/8 | 0/2 | ENG-0004 -> ENG-0006 |
+| J-MEM | 0/8 | 0/2 | ENG-0004 -> ENG-0006 -> ENG-0008 |
 | J-SYS | 0/0 | 0/0 | (aucun) |
 | J-CHR | 0/0 | 0/0 | (aucun) |
 | J-REV | 0/0 | 0/0 | (aucun) |
 | J-GEN | 0/0 | 0/0 | (aucun) |
 | J-PUB | 0/0 | 0/0 | (aucun) |
 
-PPC (promesses tenues) : 100 % (2/2)
+PPC (promesses tenues) : 100 % (3/3)
 Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ## 2. Réseau d'engagements
 
 ### Frontière (prêt à tirer, trié par poids de déblocage)
 
-- (vide)
+- ENG-0005 (débloque 3) : Provider layer: contract, fake provider, context assembly and preview, call record, failure states, the Claude adapter, the ask action
+- ENG-0004 (débloque 2) : Kernel: a save refused after the unit file landed completes at the next retry
 
 ### En vol
 
-- ENG-0003 : Desktop application: project on disk, editing with save state, outline, search, Markdown round trip ; promettant coordinator-session, réservé par Karim Dhrif <karimdhrif4444@gmail.com>, pris le 2026-10-16T00:53:42+00:00
+- (aucun)
 
 ### En attente ou gelés
 
-- ENG-0004 [en_attente] : Kernel: a save refused after the unit file landed completes at the next retry (attend : ENG-0003)
-- ENG-0005 [en_attente] : Provider layer: contract, fake provider, context assembly and preview, call record, failure states, the Claude adapter, the ask action (attend : ENG-0003)
 - ENG-0006 [en_attente] : Desktop: provider connection and key store, capability and cost panel, preview, ask action with failure states, provider switch (attend : ENG-0004, ENG-0005)
+- ENG-0007 [en_attente] : Project memory: entries as objects, extraction with located quotes, reconciliation, corrections and merges, the corpus evaluation (attend : ENG-0005)
+- ENG-0008 [en_attente] : Desktop: the memory panel, extraction review, the provenance question on an entry, corrections and merges (attend : ENG-0006, ENG-0007)
 
 ## 3. Arbitrages et décisions (votre inbox)
 
@@ -41,6 +42,12 @@ Hors PPC : 0 abandonné(s), 0 remplacé(s)
 
 ## 4. Anomalies
 
+- dérive spec : SPEC-PRJ-001 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
+- dérive spec : SPEC-PRJ-002 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
+- dérive spec : SPEC-PRJ-003 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
+- dérive spec : SPEC-PRJ-004 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
+- dérive spec : SPEC-PRJ-005 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
+- dérive spec : SPEC-PRJ-006 déclaré IMPLEMENTED par ENG-0003 (livraison vérifiée) mais PLANNED au dossier de recette
 - dette documentaire : SPEC-KER-003 (impact déclaré par ENG-0001, non résorbé)
 - dette documentaire : SPEC-KER-008 (impact déclaré par ENG-0002, non résorbé)
 - dette documentaire : SPEC-KER-009 (impact déclaré par ENG-0002, non résorbé)
