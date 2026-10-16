@@ -2,7 +2,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
-import { Kernel, type Storage } from "@ipe/kernel";
+import { Kernel, canonicalJson, type Storage } from "@ipe/kernel";
 import { NodeStorage, RandomIds, SystemClock, createProject, nodeHash, openProject } from "../src/index.js";
 import { tmpFolder } from "./support/tmp.js";
 
@@ -129,21 +129,58 @@ describe("SPEC-KER-012 Consistent state after interruption", () => {
     for (let failAt = 1; failAt <= steps; failAt++) {
       const { root, unit } = await seeded(`retry-${failAt}`);
       const { kernel, faulty } = await faultyKernel(root);
+      const versionsBefore = kernel.versions().length;
       faulty.failAt = failAt;
       await expect(kernel.writeUnit(unit.id, longer)).rejects.toThrow("injected interruption");
       faulty.failAt = Number.POSITIVE_INFINITY;
       // The same text again, in the same kernel: the save runs whole and returns a version of its own.
       const retried = await kernel.writeUnit(unit.id, longer);
       expect(retried.version?.action, `step ${failAt}`).toBe("write");
+      // One version for one effective save, except when the state alone was refused: the index already held one.
+      expect(kernel.versions().length - versionsBefore, `step ${failAt}: versions recorded`).toBe(failAt === steps ? 2 : 1);
+      expect(await kernel.readVersion(unit.id, retried.version?.id ?? ""), `step ${failAt}: blob`).toBe(longer);
       const reopened = await openProject(root);
       expect(reopened.readUnit(unit.id), `step ${failAt}`).toBe(longer);
       expect(reopened.openReport.externalChanges, `step ${failAt}`).toEqual([]);
       expect(reopened.openReport.interrupted, `step ${failAt}`).toBe(false);
       expect(reopened.listObjects().length, `step ${failAt}`).toBe(1);
       expect(reopened.currentVersion()?.id, `step ${failAt}`).toBe(retried.version?.id);
+      // Every object file holds the live object, and the reopened objects are the live ones.
+      for (const live of kernel.listObjects()) {
+        expect(await fs.readFile(path.join(root, ".ipe", "objects", `${live.id}.json`), "utf8"), `step ${failAt}: object file`).toBe(canonicalJson(live));
+        expect(reopened.getObject(live.id), `step ${failAt}: reopened object`).toEqual(live);
+      }
       // Saved once, the same text is a no-op again: no new version for nothing.
       const again = await kernel.writeUnit(unit.id, longer);
       expect(again.version?.id, `step ${failAt}`).toBe(retried.version?.id);
+    }
+  });
+
+  it("TST-KER-012e: a save refused past the unit file still completes at the retry when another unit was saved in between", async () => {
+    const longer = `${TEXT} And then the rain.`;
+    for (const failAt of [2, 3]) {
+      const { root, unit } = await seeded(`interleaved-${failAt}`);
+      const { kernel, faulty } = await faultyKernel(root);
+      const other = await kernel.addUnit("Chapter 2");
+      faulty.count = 0;
+      faulty.failAt = failAt;
+      await expect(kernel.writeUnit(unit.id, longer)).rejects.toThrow("injected interruption");
+      faulty.failAt = Number.POSITIVE_INFINITY;
+      // Another unit saved in between completes its own save and repairs nothing of the first.
+      await kernel.writeUnit(other.id, "The second chapter, whole.");
+      const retried = await kernel.writeUnit(unit.id, longer);
+      expect(retried.version?.action, `step ${failAt}`).toBe("write");
+      expect(retried.version?.units[unit.id], `step ${failAt}`).toBe(nodeHash.sha256(longer));
+      expect(await kernel.readVersion(unit.id, retried.version?.id ?? ""), `step ${failAt}: blob`).toBe(longer);
+      const reopened = await openProject(root);
+      expect(reopened.readUnit(unit.id), `step ${failAt}`).toBe(longer);
+      expect(reopened.readUnit(other.id), `step ${failAt}`).toBe("The second chapter, whole.");
+      expect(reopened.openReport.externalChanges, `step ${failAt}`).toEqual([]);
+      expect(reopened.openReport.interrupted, `step ${failAt}`).toBe(false);
+      for (const live of kernel.listObjects()) {
+        expect(await fs.readFile(path.join(root, ".ipe", "objects", `${live.id}.json`), "utf8"), `step ${failAt}: object file`).toBe(canonicalJson(live));
+        expect(reopened.getObject(live.id), `step ${failAt}: reopened object`).toEqual(live);
+      }
     }
   });
 });
