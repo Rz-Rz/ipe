@@ -20,7 +20,7 @@ impact : docs/PROVIDER_DESIGN.md, Section 5: the call record enters accepted wit
 
 ## SPEC-PRV-006
 
-impact : docs/PROVIDER_DESIGN.md, Sections 2 and 6: the failure states are no_network, auth_refused, billing_refused, rate_limited, timed_out, cancelled, overloaded, invalid_request, provider_error, unparseable; 402 maps to billing_refused, 504 and 408 to timed_out, other 4xx to invalid_request, other 5xx to provider_error, the rest as the section says; the adapter sets no timer, the caller's signal is the timeout.
+impact : docs/PROVIDER_DESIGN.md, Sections 2 and 6: the failure states are no_network, auth_refused, billing_refused, rate_limited, timed_out, cancelled, overloaded, invalid_request, provider_error, unparseable; 402 maps to billing_refused, 504 and 408 to timed_out, other 4xx to invalid_request, other 5xx to provider_error, the rest as the section says; the adapter sets no timer, the caller's signal is the timeout, and a timeout armed on that signal is recognised by the name TimeoutError of the rejection or of the signal's reason, tested before the abort; the ask action reads the signal when the answer arrives and again immediately before the answer object is created, once the record is completed, and the window that remains is that creation.
 
 ## SPEC-PRV-007
 
@@ -28,4 +28,4 @@ impact : docs/PROVIDER_DESIGN.md, Section 2: `complete` takes `maxOutputTokens`,
 
 ## SPEC-AST-001
 
-sans_impact : the action is as Section 1 and Section 5 describe it; the interface of ENG-0006 shows it.
+impact : docs/PROVIDER_DESIGN.md, Section 5: the answer object is created against the version current at its creation, since the kernel creates objects against the current version only; the call record keeps the version read. When the scoped text changes during the call, the answer's anchors are read from the new text and are not marked stale: the degraded case of the requirement remains for the commitment drafted in REPORT.md (an object created against a named version).
