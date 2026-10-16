@@ -1,9 +1,9 @@
 id: ENG-0003
 type: realisation
 titre: "Desktop application: project on disk, editing with save state, outline, search, Markdown round trip"
-promettant: null
-reserve_par: null
-pris_le: null
+promettant: "coordinator-session"
+reserve_par: "Karim Dhrif <karimdhrif4444@gmail.com>"
+pris_le: '2026-10-16T00:53:42+00:00'
 restitue_le: null
 beneficiaire: "jalon:J-KER"
 exigences:
@@ -38,7 +38,7 @@ echeance: null
 readiness: []
 readiness_ok: true
 contrat: null
-statut: propose
+statut: pris
 variance: null
 remplace_par: null
 notes: >
