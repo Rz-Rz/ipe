@@ -1,0 +1,50 @@
+id: ENG-0008
+type: realisation
+titre: "Desktop: the memory panel, extraction review, the provenance question on an entry, corrections and merges"
+promettant: null
+reserve_par: null
+pris_le: null
+restitue_le: null
+beneficiaire: jalon:J-MEM
+exigences:
+  - SPEC-MEM-004
+  - SPEC-MEM-006
+  - SPEC-MEM-007
+  - SPEC-AST-002
+scope:
+  domaines:
+    - MEM
+    - AST
+  paths:
+    - apps/desktop/**
+    - e2e/**
+    - playwright.config.ts
+    - package.json
+    - pnpm-lock.yaml
+definition_of_done: >
+  1. The desktop interface holds the memory panel of docs/MEMORY_DESIGN.md Section 7: entries
+  grouped by category with their state, filters by unit and by state, a text search, the entries
+  of the open unit beside the editor with a jump to the passage, the extraction gesture with the
+  preview and the review of the proposals one by one, the provenance question on any entry, the
+  corrections, the disputed mark and the merge with undo; the channel carries the calls the
+  section lists. 2. The tests TST-MEM-004a, TST-MEM-006b, TST-MEM-007a and TST-AST-002a exist
+  under their names and pass in the browser against the bridge with the fake provider replaying
+  the recorded answers of the corpus; the Electron smoke test still passes. 3. A user can, in the
+  running application: extract a chapter, review and accept proposals, ask why the project says
+  something, correct and merge entries, and see entries go stale after a revision; the report
+  lists these gestures with the screenshots the tests captured. 4. REPORT.md opens with the result
+  against this definition and names each requirement with the tests that prove it.
+depends_on:
+  - eng: ENG-0006
+    type: finish-start
+  - eng: ENG-0007
+    type: finish-start
+echeance: null
+readiness: []
+readiness_ok: true
+contrat: null
+statut: propose
+variance: null
+remplace_par: null
+notes: >
+  2026-10-16: drafted by the coordinator with ENG-0007. Design note: docs/MEMORY_DESIGN.md.

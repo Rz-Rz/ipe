@@ -1,0 +1,53 @@
+id: ENG-0007
+type: realisation
+titre: "Project memory: entries as objects, extraction with located quotes, reconciliation, corrections and merges, the corpus evaluation"
+promettant: null
+reserve_par: null
+pris_le: null
+restitue_le: null
+beneficiaire: jalon:J-MEM
+exigences:
+  - SPEC-MEM-001
+  - SPEC-MEM-002
+  - SPEC-MEM-003
+  - SPEC-MEM-005
+  - SPEC-MEM-006
+  - SPEC-AST-002
+scope:
+  domaines:
+    - MEM
+    - AST
+  paths:
+    - packages/assistant/**
+    - packages/providers/**
+    - package.json
+    - pnpm-lock.yaml
+definition_of_done: >
+  1. packages/assistant holds the entry module (the body of an entry, the categories, the
+  established facts, creation refused outside the categories), the extract action (the scope
+  assembled as ask does, the established facts as context, the documented JSON form asked, the
+  answer read as a whole or in part, each element proposed as an entry anchored to its located
+  quote or flagged unanchored, the call recorded, nothing created from an unreadable answer), the
+  reconciliation of a new extraction with the live entries of the scope's units (refreshed,
+  proposed, flagged no longer supported, author-edited entries left alone, other units untouched),
+  the corrections and the merge with their refusals, all as docs/MEMORY_DESIGN.md states. The
+  packages import nothing from Node or the DOM. 2. The fixture corpus with its planted facts and
+  its recorded answers exists under packages/assistant/test/corpus, and the tests TST-MEM-001a,
+  001b, 002a, 002b, 003a, 003b, 005a, 005b, 006a and TST-AST-002b exist under their names and
+  pass; the live evaluation runs only with a key in the environment and is reported as not
+  verified otherwise. 3. Every property stated is guarded by a mutant that falls. 4. REPORT.md
+  opens with the result against this definition, names each requirement with the tests that
+  prove it, and states which tests remain for the interface commitment.
+depends_on:
+  - eng: ENG-0005
+    type: finish-start
+echeance: null
+readiness: []
+readiness_ok: true
+contrat: null
+statut: propose
+variance: null
+remplace_par: null
+notes: >
+  2026-10-16: drafted by the coordinator when J-MEM was specified. Design note:
+  docs/MEMORY_DESIGN.md. Runs after ENG-0005 (the assistant package); the interface is ENG-0008.
