@@ -37,6 +37,13 @@ describe("the catalogue and the estimate", () => {
     expect(limited.message).toContain("Your organization has hit a rate limit");
     expect(failureFromStatus(401, null, null).message).toContain("status 401");
     expect(failureFromThrown(Object.assign(new Error("aborted"), { name: "AbortError" })).state).toBe("cancelled");
+    // A timeout armed on the caller's signal: the platform rejects with an error named TimeoutError and the signal aborted.
+    const timeout = Object.assign(new Error("signal timed out"), { name: "TimeoutError" });
+    const timedOutSignal = { aborted: true, reason: timeout, addEventListener() {}, removeEventListener() {} };
+    expect(failureFromThrown(timeout, timedOutSignal).state).toBe("timed_out");
+    expect(failureFromThrown(new Error("the request was aborted"), timedOutSignal).state).toBe("timed_out");
+    const abortedSignal = { aborted: true, reason: Object.assign(new Error("aborted"), { name: "AbortError" }), addEventListener() {}, removeEventListener() {} };
+    expect(failureFromThrown(new Error("the request was aborted"), abortedSignal).state).toBe("cancelled");
     expect(failureFromThrown(new TypeError("fetch failed")).state).toBe("no_network");
     expect(failureFromThrown(new ProviderError("overloaded", "x")).state).toBe("overloaded");
   });

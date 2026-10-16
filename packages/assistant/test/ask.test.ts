@@ -191,6 +191,24 @@ describe("SPEC-PRV-006 Failure states of a call", () => {
     expect(body(kernel.getObject(late.record.id)).outcome).toBe("cancelled");
     expect(kernel.listObjects().filter((o) => o.kind === "answer")).toEqual([]);
     expect(JSON.stringify(kernel.listObjects())).not.toContain("nobody wants");
+    // While the record is being completed: the clock is read when the record is finished, so a
+    // cancellation that lands at the second reading lands during that write; nothing of the answer is kept.
+    const during = new AbortController();
+    fake.answer = () => "an answer that arrives as the record closes";
+    let readings = 0;
+    const now = () => {
+      readings += 1;
+      if (readings === 2) during.abort();
+      return new Date().toISOString();
+    };
+    const mid = await failing(ask(kernel, { kind: "unit", unit: one.id }, "Who?", { connection, signal: during.signal, now }));
+    expect(mid.state).toBe("cancelled");
+    const midBody = body(kernel.getObject(mid.record.id));
+    expect(midBody.outcome).toBe("cancelled");
+    expect(midBody.failure?.state).toBe("cancelled");
+    expect(midBody.usage).not.toBeNull();
+    expect(kernel.listObjects().filter((o) => o.kind === "answer")).toEqual([]);
+    expect(JSON.stringify(kernel.listObjects())).not.toContain("record closes");
   });
 });
 

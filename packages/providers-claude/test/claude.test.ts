@@ -66,6 +66,14 @@ describe("SPEC-PRV-007 The Claude provider on its Messages API", () => {
     const noNetwork = new ClaudeProvider({ fetch: async () => { throw new TypeError("fetch failed"); } });
     await expect(noNetwork.complete("k", { model: "m", system: "", input: "x", maxOutputTokens: 10 })).rejects.toMatchObject({ state: "no_network" });
     await expect(noNetwork.models("k")).rejects.toMatchObject({ state: "no_network" });
+    // A timeout armed on the caller's signal: the platform's fetch rejects with the signal's reason, an error named TimeoutError.
+    const timeout = Object.assign(new Error("signal timed out"), { name: "TimeoutError" });
+    const timedOut = { aborted: true, reason: timeout, addEventListener() {}, removeEventListener() {} };
+    const slow = new ClaudeProvider({ fetch: async (_url, init) => { throw init.signal?.reason; } });
+    await expect(slow.complete("k", { model: "m", system: "", input: "x", maxOutputTokens: 10 }, timedOut)).rejects.toMatchObject({ state: "timed_out" });
+    await expect(slow.models("k", timedOut)).rejects.toMatchObject({ state: "timed_out" });
+    const aborted = { aborted: true, reason: Object.assign(new Error("aborted"), { name: "AbortError" }), addEventListener() {}, removeEventListener() {} };
+    await expect(slow.complete("k", { model: "m", system: "", input: "x", maxOutputTokens: 10 }, aborted)).rejects.toMatchObject({ state: "cancelled" });
     const garbage = new ClaudeProvider({ fetch: fakeFetch(() => ({ status: 200, body: "<html>not json</html>" })).fetch });
     await expect(garbage.complete("k", { model: "m", system: "", input: "x", maxOutputTokens: 10 })).rejects.toMatchObject({ state: "unparseable", status: 200 });
     expect(readCompletion(JSON.stringify({ id: "msg_1", content: [{ type: "text", text: "a" }, { type: "tool_use" }, { type: "text", text: "b" }], stop_reason: "max_tokens" }), 200, null)).toEqual({ text: "ab", usage: null, stopReason: "max_tokens", requestId: "msg_1" });

@@ -46,12 +46,20 @@ export function failureFromStatus(status: number, providerMessage: string | null
   return new ProviderError(state, `${describeState(state)}${detail}`, providerMessage, seconds, status);
 }
 
-/** A ProviderError from what the platform threw: an abort is a cancellation, anything else is no network. */
+function nameOf(value: unknown): string {
+  return typeof value === "object" && value !== null && "name" in value ? String((value as { name: unknown }).name) : "";
+}
+
+/**
+ * A ProviderError from what the platform threw. A timeout armed on the caller's signal aborts that
+ * signal with a reason named TimeoutError, so the timeout is tested first, on the error and on the
+ * signal's reason; any other abort is a cancellation; anything else is no network.
+ */
 export function failureFromThrown(error: unknown, signal?: AbortSignalLike): ProviderError {
   if (error instanceof ProviderError) return error;
-  const name = typeof error === "object" && error !== null && "name" in error ? String((error as { name: unknown }).name) : "";
+  const name = nameOf(error);
+  if (name === "TimeoutError" || (signal?.aborted && nameOf(signal.reason) === "TimeoutError")) return new ProviderError("timed_out", describeState("timed_out"));
   if (signal?.aborted || name === "AbortError") return new ProviderError("cancelled", describeState("cancelled"));
-  if (name === "TimeoutError") return new ProviderError("timed_out", describeState("timed_out"));
   const message = error instanceof Error ? error.message : String(error);
   return new ProviderError("no_network", `${describeState("no_network")}: ${message}`, null, null, null);
 }

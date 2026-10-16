@@ -140,21 +140,32 @@ export async function ask(kernel: Kernel, scope: Scope, question: string, option
   const finish = async (patch: Partial<CallRecordBody>): Promise<IpeObject> =>
     kernel.editObject(record.id, { body: { ...body, ...patch, finishedAt: now() } }, AUTHOR);
 
+  const failureOf = (failure: ProviderError): CallRecordBody["failure"] =>
+    ({ state: failure.state, message: failure.message, providerMessage: failure.providerMessage, retryAfterSeconds: failure.retryAfterSeconds });
+
   let completion;
   try {
     completion = await provider.complete(key, { model, system: context.system, input: context.input, maxOutputTokens: options.maxOutputTokens ?? 2048 }, options.signal);
-    if (options.signal?.aborted) throw new ProviderError("cancelled", "cancelled by the author after the provider answered");
   } catch (e) {
     const failure = e instanceof ProviderError ? e : new ProviderError("provider_error", e instanceof Error ? e.message : String(e));
-    const finished = await finish({
-      outcome: failure.state === "cancelled" ? "cancelled" : "failed",
-      failure: { state: failure.state, message: failure.message, providerMessage: failure.providerMessage, retryAfterSeconds: failure.retryAfterSeconds },
-    });
+    const finished = await finish({ outcome: failure.state === "cancelled" ? "cancelled" : "failed", failure: failureOf(failure) });
     throw Object.assign(failure, { record: finished });
   }
 
+  // The provider answered: what it reported is kept on the record whatever the author decided meanwhile.
   const cost = estimateCost(provider.catalogue, model, completion.usage);
-  const finished = await finish({ outcome: "completed", usage: completion.usage, cost, requestId: completion.requestId });
+  const reported: Partial<CallRecordBody> = { usage: completion.usage, cost, requestId: completion.requestId };
+  const cancelledAfterAnswer = async (): Promise<never> => {
+    const failure = new ProviderError("cancelled", "cancelled by the author after the provider answered");
+    const finished = await finish({ ...reported, outcome: "cancelled", failure: failureOf(failure) });
+    throw Object.assign(failure, { record: finished });
+  };
+  // A cancellation that landed while the provider answered keeps nothing of the answer.
+  if (options.signal?.aborted) await cancelledAfterAnswer();
+  const finished = await finish({ ...reported, outcome: "completed" });
+  // One that landed while the record was being completed keeps nothing of it either: the signal
+  // is read again immediately before the answer is created. What remains is the creation itself.
+  if (options.signal?.aborted) await cancelledAfterAnswer();
   const answerBody: AnswerBody = { question, text: completion.text, provider: provider.id, model, usage: completion.usage, cost, stopReason: completion.stopReason };
   const answer = await kernel.createObject(
     { kind: ANSWER_KIND, title: `Answer: ${shorten(question)}`, body: answerBody, anchors: anchorsForScope(kernel, scope), dependsOn: [record.id], origin: ASSISTANT, action: "ask" },

@@ -105,6 +105,8 @@ export class ProviderError extends Error {
 /** What the contract needs of an abort signal; the platform's AbortSignal satisfies it. */
 export interface AbortSignalLike {
   readonly aborted: boolean;
+  /** Why the signal was aborted: a timeout armed on the signal leaves an error named TimeoutError. */
+  readonly reason?: unknown;
   addEventListener(type: "abort", listener: () => void): void;
   removeEventListener(type: "abort", listener: () => void): void;
 }
