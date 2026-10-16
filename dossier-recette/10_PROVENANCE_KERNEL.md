@@ -72,7 +72,7 @@ All requirements of this domain belong to milestone J-KER.
 
 **Requirement.** The kernel must record manuscript versions such that any earlier version of any manuscript unit is recoverable, and every object must name the version it rests on.
 
-**Coverage.** Nominal: a version is recorded at each save. Limit: the number of versions grows without the project folder exceeding the documented bound (bound: target value, to confirm). Error: a version named by an object cannot be found; the kernel reports it, marks the object unverifiable, and never deletes it. Degraded: the history is unreadable; the current text stays editable and the history is reported absent. Exclusion: the version semantics of external tools are not required; the kernel may use them.
+**Coverage.** Nominal: a version is recorded at each save. Limit: the number of versions grows without the project folder exceeding the documented bound (bound: target value, to confirm). Error: a version named by an object cannot be found; the kernel reports it, marks the object unverifiable, and never deletes it. Degraded: the history is unreadable; the current text stays editable and the history is reported absent; the unreadable index is kept, as found, under index.json.unreadable-<time> before a fresh index replaces it at the next save. Exclusion: the version semantics of external tools are not required; the kernel may use them.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
@@ -138,39 +138,40 @@ All requirements of this domain belong to milestone J-KER.
 
 ### SPEC-KER-008: Documented on-disk formats
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-P05, IPE-Q06, IPE-N01
-- Implementation: none
+- Implementation: `packages/adapters-node/src/index.ts`, `packages/kernel/src/kernel.ts`, `docs/FORMAT.md`
 - Acceptance priority: critical
 
 **Requirement.** The kernel must store the manuscript as Markdown files and the objects as text files in a documented format, inside the project folder, such that another program can read both without the product.
 
-**Coverage.** Nominal: a project opens from its folder alone. Limit: a project folder copied elsewhere opens identically. Error: one unreadable object file is reported by name and the rest of the project opens. Degraded: none. Exclusion: binary assets are stored as files and referenced, never embedded in the object store.
+**Coverage.** Nominal: a project opens from its folder alone. Limit: a project folder copied elsewhere opens identically. Error: an object file that is not JSON is reported by its path and skipped, and the rest of the project opens; a file that is JSON but breaks the format refuses the project with the file named. Degraded: none. Exclusion: binary assets are stored as files and referenced, never embedded in the object store; the journal is appended, not written through a renamed temporary file, and a truncated last line is skipped at opening, the count of skipped lines being reported in the opening report.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-008a | planned | integration | A minimal independent reader, kept in the test suite, reads the whole object store from the documented format alone. |
-| TST-KER-008b | planned | system | A copied project folder opens with identical objects and text. |
-| TST-KER-008c | planned | unit | One corrupted object file is reported by name; the other objects load. |
+| TST-KER-008a | `packages/adapters-node/test/ker-008.test.ts` > SPEC-KER-008 Documented on-disk formats > TST-KER-008a: an independent reader reads the whole store from the documented format alone | integration | A minimal independent reader, kept in the test suite, reads the whole object store from the documented format alone. |
+| TST-KER-008b | `packages/adapters-node/test/ker-008.test.ts` > SPEC-KER-008 Documented on-disk formats > TST-KER-008b: a copied project folder opens with identical objects and text | system | A copied project folder opens with identical objects and text. |
+| TST-KER-008c | `packages/adapters-node/test/ker-008.test.ts` > SPEC-KER-008 Documented on-disk formats > TST-KER-008c: one corrupted object file is reported by name; the other objects load | unit | One corrupted object file is reported by name; the other objects load. |
+| TST-KER-008d | `packages/adapters-node/test/ker-008.test.ts` > SPEC-KER-008 Documented on-disk formats > TST-KER-008d: a truncated last journal line is skipped at opening and its count is reported | unit | A truncated last journal line is skipped at opening and its count is reported. |
 
 ### SPEC-KER-009: External edits are never discarded
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-Q01, IPE-Q06
-- Implementation: none
+- Implementation: `packages/kernel/src/kernel.ts`, `packages/adapters-node/src/index.ts`
 - Acceptance priority: critical
 
 **Requirement.** When a manuscript unit changed on disk outside the product, the kernel must detect the change at the next access, keep the external text, and report which units changed and which anchors were affected.
 
-**Coverage.** Nominal: a unit edited by another program is reported at reopen with its affected anchors. Limit: the unit changes while open in the product; the product presents both texts and never overwrites the external one without the author's choice. Error: none. Degraded: when file timestamps are unreliable, detection falls back to content comparison. Exclusion: automatic merging of concurrent edits is not required; the author chooses.
+**Coverage.** Nominal: a unit edited by another program is reported at reopen with its affected anchors. Limit: the unit changes while open in the product; the save is refused with code conflict, the disk text is returned beside the author's, the product presents both and never overwrites the external one without the author's choice; a save with force keeps the author's text. Error: none. Degraded: detection is by content hash, never by timestamp; frozen timestamps change nothing. Exclusion: automatic merging of concurrent edits is not required; the author chooses.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-009a | planned | integration | An external edit is detected and reported with affected anchors. |
-| TST-KER-009b | planned | integration | A conflict on an open unit presents both texts; neither is lost. |
-| TST-KER-009c | planned | unit | With timestamps frozen, detection still succeeds by content. |
+| TST-KER-009a | `packages/adapters-node/test/ker-009.test.ts` > SPEC-KER-009 External edits are never discarded > TST-KER-009a: an external edit is detected at the next opening, kept, and reported with its affected anchors | integration | An external edit is detected and reported with affected anchors. |
+| TST-KER-009b | `packages/adapters-node/test/ker-009.test.ts` > SPEC-KER-009 External edits are never discarded > TST-KER-009b: a conflict on an open unit presents both texts and overwrites nothing without the author's choice | integration | A conflict on an open unit presents both texts; neither is lost. |
+| TST-KER-009c | `packages/adapters-node/test/ker-009.test.ts` > SPEC-KER-009 External edits are never discarded > TST-KER-009c: with timestamps frozen, the external edit is still detected by content | unit | With timestamps frozen, detection still succeeds by content. |
 
 ### SPEC-KER-010: Provenance query
 
@@ -208,20 +209,21 @@ All requirements of this domain belong to milestone J-KER.
 
 ### SPEC-KER-012: Consistent state after interruption
 
-- Status: PLANNED
+- Status: IMPLEMENTED
 - Source: Specified (product need)
 - Parent need: IPE-Q01
-- Implementation: none
+- Implementation: `packages/adapters-node/src/index.ts`, `packages/kernel/src/kernel.ts`
 - Acceptance priority: critical
 
 **Requirement.** An interruption of the product at any point of a write must leave the project folder in the last consistent state, with the manuscript and the object store readable.
 
-**Coverage.** Nominal: an interruption during a save leaves the previous save intact. Limit: an interruption between the manuscript write and the object write is detected at reopen and reported, both files kept. Error: none. Degraded: on a full disk the write is refused with a message and the previous state is intact. Exclusion: failure of the storage medium itself.
+**Coverage.** Nominal: an interruption during a save leaves the previous save intact. Limit: an interruption between the manuscript write and the object write is detected at reopen and reported, both files kept; a crash between the temporary file and the rename leaves the target as it was and removes the temporary file; a crash of the operating system during the rename itself relies on the file system and is not tested. Error: none. Degraded: on a full disk the write is refused with a message and the previous state is intact (simulated by an adapter error carrying ENOSPC at the first write of the save, the unit's file); after the refusal the same kernel saves again once there is room, and the author's text lands. A refusal at a later step of the save leaves the unit's file with the new text, which a reopen absorbs as an external change: nothing is lost, and the save of the same text completes at a retry only once ENG-0004 is held. Exclusion: failure of the storage medium itself.
 
 | Test | Artefact | Nature | Expected result |
 |---|---|---|---|
-| TST-KER-012a | planned | system | With a fault injected at each step of a write, the project reopens in its last consistent state. |
-| TST-KER-012b | planned | system | With the disk full, the write is refused and the previous state is intact. |
+| TST-KER-012a | `packages/adapters-node/test/ker-012.test.ts` > SPEC-KER-012 Consistent state after interruption > TST-KER-012a: with a fault injected at each step of a write, the project reopens in its last consistent state | system | With a fault injected at each step of a write, the project reopens in its last consistent state. |
+| TST-KER-012b | `packages/adapters-node/test/ker-012.test.ts` > SPEC-KER-012 Consistent state after interruption > TST-KER-012b: with the disk full, the write is refused, the previous state is intact, and the same kernel saves again once there is room | system | With the disk full, the write is refused and the previous state is intact. |
+| TST-KER-012c | `packages/adapters-node/test/ker-012.test.ts` > SPEC-KER-012 Consistent state after interruption > TST-KER-012c: a failure in the middle of a write leaves the target as it was, and no temporary file behind | unit | A crash after the temporary file and before the rename leaves the target as it was, removes the temporary file, and the project reopens unchanged. |
 
 ### SPEC-KER-013: Dependencies between objects
 

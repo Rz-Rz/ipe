@@ -6,8 +6,8 @@ This document describes everything IPE writes inside a project folder, completel
 
 1. A project is one folder. Nothing about the project lives outside it.
 2. The manuscript is plain Markdown files, one per unit, readable by any editor. IPE never rewrites a unit's text except through the author's own save.
-3. Everything IPE records about the work lives under `.ipe/`, in JSON text files with keys sorted at every level, two-space indentation, and one trailing newline. The one exception is the journal (Section 6): each of its lines is one compact JSON object, with the keys in the order the kernel writes them.
-4. Every write is atomic: a file is either its previous content or its new content, never a mixture. A save writes the unit's file, then the objects it touched, then the blob of the new content, then the versions index, then the state, in that order; the state is the last consistent snapshot. A write interrupted between its temporary file and the rename can leave a file named `<target>.<pid>.<time>.<random>.tmp` beside the target: IPE ignores such files, and a reader ignores every file whose name ends in `.tmp`.
+3. Everything IPE records about the work lives under `.ipe/`, in JSON text files with keys sorted at every level, two-space indentation, and one trailing newline. Three files are not: the journal (Section 6), each of whose lines is one compact JSON object with the keys in the order the kernel writes them; the blobs (Section 5), which hold raw unit contents; and an unreadable index kept as found under `index.json.unreadable-<time>` (Section 5).
+4. Every write is atomic, except the journal's append (Section 6): a file is either its previous content or its new content, never a mixture. A save writes the unit's file, then the objects it touched, then the blob of the new content, then the versions index, then the state, in that order; the state is the last consistent snapshot. A write interrupted between its temporary file and the rename can leave a file named `<target>.<pid>.<time>.<random>.tmp` beside the target: IPE ignores such files, and a reader ignores every file whose name ends in `.tmp`.
 5. Unit contents are stored by content hash (SHA-256 of the UTF-8 bytes, lowercase hexadecimal), so every earlier state of every unit is recoverable and identical content is stored once.
 
 ## 2. `ipe.json`, the manifest
@@ -89,6 +89,7 @@ One JSON object per line, appended, never rewritten:
 
 - `kind`: one of `create`, `edit`, `accept`, `reject`, `delete`, `undo`, `refresh`, `refused`.
 - `before` and `after`: full snapshots of the object (Section 4), or `null`. Undo restores `before`.
+- `objectId`: the object concerned; a `refused` event for a creation that never happened carries the literal `(none)`.
 - A line that is not an event (a last line cut by a crash in the middle of an append) is skipped when the project opens, and the count of skipped lines is reported to the caller (`journalLinesSkipped` in the opening report).
 
 ## 7. `.ipe/state.json`, the last consistent state

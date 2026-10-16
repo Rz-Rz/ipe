@@ -92,7 +92,7 @@ export interface Manifest {
 export interface Version {
   id: VersionId;
   at: string;
-  /** The action that produced it: create, write, external, add-unit. A move, a rename or a relocation changes the manifest only. */
+  /** The action that produced it: create, write, external, add-unit, adopt-unit. A move, a rename or a relocation changes the manifest only. */
   action: string;
   units: Record<UnitId, string>;
 }

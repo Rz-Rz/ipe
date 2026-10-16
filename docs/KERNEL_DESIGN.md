@@ -48,24 +48,24 @@ After a batch of unit changes, the kernel re-resolves anchors, then marks stale 
   <unit>.md                manuscript units, Markdown, wherever the manifest points
   .ipe/
     objects/<id>.json      one object per file, pretty-printed JSON
-    versions/index.json    the versions, newest last
+    versions/index.json    the versions, newest last; an unreadable one is kept as index.json.unreadable-<time>
     versions/blobs/<hash>  unit contents, content-addressed (sha-256)
     journal.jsonl          append-only events
     state.json             the last consistent state: version id, unit hashes, written last
 ```
 
-Every write is atomic (temporary file, then rename). A save writes blobs, then objects, then the versions index, then `state.json`. At open, the kernel compares the unit hashes on disk with `state.json`: a difference is an external edit (SPEC-KER-009) or an interrupted save (SPEC-KER-012); both are reported, neither is overwritten. An independent reader in the test suite reads the whole store from this description alone.
+The format is specified by `docs/FORMAT.md` (version 1), the authority for every file the kernel writes. Every write is atomic (temporary file, then rename). A save writes the unit file, then the objects, then the blob, then the versions index, then `state.json`, so that an interruption at any step leaves the last consistent state. At open, the kernel compares the unit hashes on disk with `state.json`: a difference is an external edit (SPEC-KER-009) or an interrupted save (SPEC-KER-012); the content on disk is kept, the anchors that rest on it are re-resolved, a version with action `external` is recorded, and the unit and the anchor changes are reported. An object file that is not JSON is reported by its path and skipped; a file that breaks the format refuses the project. An unreadable versions index is kept under another name before a fresh one replaces it; a journal line that is not an event is skipped and counted in the opening report (`journalLinesSkipped`); a file whose name ends in `.tmp`, left by an interrupted write, is ignored. An independent reader in the test suite reads the whole store from `docs/FORMAT.md` alone.
 
 ## 6. Adapters
 
 ```ts
-interface Storage { read(path): Promise<string | null>; write(path, text): Promise<void>; list(dir): Promise<string[]>; remove(path): Promise<void>; exists(path): Promise<boolean> }
+interface Storage { read(path): Promise<string | null>; write(path, text): Promise<void>; append?(path, text): Promise<void>; list(dir): Promise<string[]>; remove(path): Promise<void>; exists(path): Promise<boolean> }
 interface Clock { now(): string }       // ISO-8601
 interface Ids { next(): string }         // unique, sortable
 interface Hash { sha256(text): string }
 ```
 
-`write` is atomic by contract. The kernel takes `{ storage, clock, ids, hash }` at construction and nothing else.
+`write` is atomic by contract. The Node storage (`packages/adapters-node`) writes through a temporary file in the same folder and one rename (`moveIntoPlace`), removes the temporary file on failure, and appends the journal with the platform's append. The kernel takes `{ storage, clock, ids, hash }` at construction and nothing else; `hash` defaults to the kernel's own SHA-256.
 
 ## 7. Interface (SPEC-PRJ-001 to 006)
 
@@ -75,7 +75,8 @@ The renderer shows an outline (the manifest tree, reorderable), an editor (CodeM
 interface IpeApi {
   openProject(path): Promise<ProjectView>;
   readUnit(unitId): Promise<string>;
-  writeUnit(unitId, text): Promise<SaveResult>;        // returns invalidated objects and anchor changes
+  writeUnit(unitId, text, { force? }): Promise<SaveResult | ConflictResult>;   // invalidated objects and anchor changes; a conflict when the disk changed since the text was read, unless forced
+  externalText(unitId): Promise<string | null>;         // the disk text when it differs from the last known one
   moveUnit(unitId, parentId, index): Promise<ProjectView>;
   search(term): Promise<Hit[]>;
   objects(filter?): Promise<ObjectSummary[]>;
