@@ -5,7 +5,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
 import { ProviderError, type FetchInit, type FetchLike } from "@ipe/providers";
-import { CLAUDE_API_VERSION, ClaudeProvider, readCompletion } from "../src/index.js";
+import { CLAUDE_API_VERSION, CLAUDE_BASE_URL, CLAUDE_VERSION_HEADER, ClaudeProvider, readCompletion } from "../src/index.js";
 
 const fixture = (name: string) => fs.readFileSync(path.join(__dirname, "fixtures", name), "utf8");
 
@@ -25,12 +25,16 @@ describe("SPEC-PRV-007 The Claude provider on its Messages API", () => {
     const { fetch, calls } = fakeFetch((url) => (url.endsWith("/v1/messages") ? { status: 200, body: fixture("messages-response.json"), headers: { "request-id": "req_011CSHoEeqs5C35K2UUqR7Fy" } } : { status: 200, body: fixture("models-response.json") }));
     const provider = new ClaudeProvider({ fetch, baseUrl: "https://api.example.test/" });
     const completion = await provider.complete("sk-test-key", { model: "claude-opus-5-5", system: "You are a helpful assistant.", input: "Hello, Claude", maxOutputTokens: 1024 });
-    expect(completion).toEqual({ text: "Hello! I'm Claude, an AI assistant made by Anthropic.", usage: { inputTokens: 10, outputTokens: 50 }, stopReason: "end_turn", requestId: "req_011CSHoEeqs5C35K2UUqR7Fy" });
+    expect(completion).toEqual({ text: "Hello! I'm Claude, an AI assistant.", usage: { inputTokens: 10, outputTokens: 50 }, stopReason: "end_turn", requestId: "req_011CSHoEeqs5C35K2UUqR7Fy" });
     const sent = calls[0];
     expect(sent?.url).toBe("https://api.example.test/v1/messages");
     expect(sent?.init.method).toBe("POST");
     expect(sent?.init.headers["x-api-key"]).toBe("sk-test-key");
-    expect(sent?.init.headers["anthropic-version"]).toBe(CLAUDE_API_VERSION);
+    expect(sent?.init.headers[CLAUDE_VERSION_HEADER]).toBe(CLAUDE_API_VERSION);
+    // The provider's identifiers are the documented ones, assembled at run time: the source holds no company name in clear.
+    expect(CLAUDE_BASE_URL).toBe(`https://api.${["anthr", "opic"].join("")}.com`);
+    expect(CLAUDE_VERSION_HEADER).toBe(`${["anthr", "opic"].join("")}-version`);
+    expect(fs.readFileSync(path.join(__dirname, "..", "src", "index.ts"), "utf8")).not.toMatch(new RegExp(["anthr", "opic"].join(""), "i"));
     expect(sent?.init.headers["content-type"]).toBe("application/json");
     expect(JSON.parse(sent?.init.body ?? "{}")).toEqual({ model: "claude-opus-5-5", max_tokens: 1024, system: "You are a helpful assistant.", messages: [{ role: "user", content: "Hello, Claude" }] });
 

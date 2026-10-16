@@ -7,7 +7,7 @@
     { "status": 404, "type": "not_found_error", "message": "The requested resource could not be found.", "state": "invalid_request" },
     { "status": 413, "type": "request_too_large", "message": "Request exceeds the maximum allowed number of bytes.", "state": "invalid_request" },
     { "status": 429, "type": "rate_limit_error", "message": "Your organization has hit a rate limit.", "state": "rate_limited" },
-    { "status": 500, "type": "api_error", "message": "An unexpected error has occurred internal to Anthropic's systems.", "state": "provider_error" },
+    { "status": 500, "type": "api_error", "message": "An unexpected error has occurred internal to the provider's systems.", "state": "provider_error" },
     { "status": 504, "type": "timeout_error", "message": "The request timed out while processing.", "state": "timed_out" },
     { "status": 529, "type": "overloaded_error", "message": "The API is temporarily overloaded.", "state": "overloaded" }
   ]

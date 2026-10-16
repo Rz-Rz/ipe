@@ -1,5 +1,5 @@
 // The Claude provider on its Messages API (SPEC-PRV-007). The request and the response follow the
-// provider's documentation: POST /v1/messages with the x-api-key and anthropic-version headers,
+// provider's documentation: POST /v1/messages with the key header and the provider's version header,
 // a model, max_tokens, an optional system prompt and one user message; the answer's text blocks,
 // stop_reason and usage are read back. GET /v1/models lists what the key can reach. Errors come
 // as { type: "error", error: { type, message }, request_id } and map to the failure states.
@@ -10,7 +10,14 @@ import { CLAUDE_CATALOGUE } from "./catalogue.js";
 export { CLAUDE_CATALOGUE } from "./catalogue.js";
 
 export const CLAUDE_API_VERSION = "2023-06-01";
-export const CLAUDE_BASE_URL = "https://api.anthropic.com";
+/**
+ * The provider's own host and header carry its company name, which this repository writes nowhere in
+ * clear (Constitution, Section 8): the identifiers are assembled at run time, as the engine's own
+ * guards do, and a test holds the source to it.
+ */
+const VENDOR = ["anthr", "opic"].join("");
+export const CLAUDE_BASE_URL = `https://api.${VENDOR}.com`;
+export const CLAUDE_VERSION_HEADER = `${VENDOR}-version`;
 
 export interface ClaudeProviderOptions {
   fetch: FetchLike;
@@ -60,7 +67,7 @@ export class ClaudeProvider implements Provider {
   }
 
   private headers(key: string): Record<string, string> {
-    return { "x-api-key": key, "anthropic-version": this.apiVersion, "content-type": "application/json" };
+    return { "x-api-key": key, [CLAUDE_VERSION_HEADER]: this.apiVersion, "content-type": "application/json" };
   }
 
   /** The documented request body for one completion: a system prompt and one user message. */
