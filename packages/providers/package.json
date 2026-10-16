@@ -1,0 +1,19 @@
+{
+  "name": "@ipe/providers",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The provider contract of IPE: requests and answers, the dated catalogue, the failure states, the context assembly and its preview, and a fake provider for tests. Pure TypeScript: no Node, no DOM.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ipe/kernel": "workspace:*"
+  }
+}
