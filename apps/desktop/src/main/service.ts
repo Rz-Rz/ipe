@@ -3,9 +3,9 @@
 
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { AUTHOR, Kernel, KernelError, MANIFEST, type Counts, type CreateObjectInput, type Hit, type IpeObject, type ProvenanceChain, type UnitNode, type Version } from "@ipe/kernel";
+import { AUTHOR, Kernel, KernelError, MANIFEST, type Counts, type CreateObjectInput, type IpeObject, type ProvenanceChain, type UnitNode, type Version } from "@ipe/kernel";
 import { nodeAdapters, nodeHash } from "@ipe/adapters-node";
-import type { ConflictResult, IpeApi, MoveResult, ProjectView, SaveResult, UnitText } from "../api.js";
+import { SEARCH_SHOWN, type ConflictResult, type IpeApi, type MoveResult, type ProjectView, type SaveResult, type SearchResult, type UnitText } from "../api.js";
 
 function flatten(nodes: UnitNode[], out: UnitNode[] = []): UnitNode[] {
   for (const n of nodes) {
@@ -74,6 +74,11 @@ export class IpeService implements IpeApi {
     }
   }
 
+  async takeDisk(unitId: string): Promise<UnitText> {
+    const taken = await this.open().takeExternal(unitId);
+    return { unitId, text: taken.text, hash: nodeHash.sha256(taken.text) };
+  }
+
   async addUnit(title: string, parentId: string | null): Promise<UnitNode> {
     return this.open().addUnit(title, { parentId });
   }
@@ -92,8 +97,10 @@ export class IpeService implements IpeApi {
     return { units: kernel.units(), carried };
   }
 
-  async search(term: string): Promise<Hit[]> {
-    return this.open().search(term);
+  /** Every occurrence counted; the first SEARCH_SHOWN returned, so the interface can say what it cut. */
+  async search(term: string): Promise<SearchResult> {
+    const all = this.open().search(term);
+    return { hits: all.slice(0, SEARCH_SHOWN), total: all.length };
   }
 
   async objects(): Promise<IpeObject[]> {
@@ -110,6 +117,10 @@ export class IpeService implements IpeApi {
 
   async rejectObject(objectId: string): Promise<IpeObject> {
     return this.open().reject(objectId, AUTHOR);
+  }
+
+  async deleteObject(objectId: string): Promise<void> {
+    await this.open().deleteObject(objectId, AUTHOR);
   }
 
   async explain(objectId: string): Promise<ProvenanceChain> {

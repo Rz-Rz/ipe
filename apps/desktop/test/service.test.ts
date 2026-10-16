@@ -44,19 +44,54 @@ describe("IpeService", () => {
     expect(await fs.readFile(path.join(root, unit.path), "utf8")).toBe("mine, second");
   });
 
-  it("counts the objects a move carries (SPEC-PRJ-002)", async () => {
+  it("counts the live objects a move carries, on the unit and on its descendants, tombstones left out (SPEC-PRJ-002)", async () => {
     const root = await tmp("move");
     const service = new IpeService();
     await service.createProject(root, "Move");
     const chapter = await service.addUnit("Chapter 1", null);
     const scene = await service.addUnit("Scene", null);
+    const beat = await service.addUnit("Beat", scene.id);
     await service.writeUnit(scene.id, "A passage to note.");
+    await service.writeUnit(beat.id, "A beat inside the scene.");
     await service.createObject({ kind: "note", title: "n", origin: "author", action: "note", anchors: [{ unit: scene.id, start: 2, end: 9 }] }, "author");
     await service.createObject({ kind: "fact", title: "f", origin: "assistant", action: "extract", anchors: [{ unit: scene.id, start: 10, end: 14 }] }, "assistant");
+    await service.createObject({ kind: "note", title: "on the beat", origin: "author", action: "note", anchors: [{ unit: beat.id, start: 2, end: 6 }] }, "author");
+    const gone = await service.createObject({ kind: "note", title: "deleted before the move", origin: "author", action: "note", anchors: [{ unit: scene.id, start: 0, end: 1 }] }, "author");
+    await service.deleteObject(gone.id);
     const moved = await service.moveUnit(scene.id, chapter.id, 0);
-    expect(moved.carried).toBe(2);
+    expect(moved.carried).toBe(3);
     expect(moved.units[0]?.children[0]?.id).toBe(scene.id);
+    expect(moved.units[0]?.children[0]?.children[0]?.id).toBe(beat.id);
     expect((await service.objects()).every((o) => o.anchors.every((a) => a.state === "intact"))).toBe(true);
+  });
+
+  it("takes the disk's text after a conflict, so that the next save lands (SPEC-PRJ-003 degraded case)", async () => {
+    const root = await tmp("take-disk");
+    const service = new IpeService();
+    await service.createProject(root, "Take");
+    const unit = await service.addUnit("Chapter", null);
+    await service.writeUnit(unit.id, "first");
+    await fs.writeFile(path.join(root, unit.path), "disk version", "utf8");
+    expect(await service.writeUnit(unit.id, "first, edited")).toMatchObject({ conflict: true, disk: "disk version" });
+    const taken = await service.takeDisk(unit.id);
+    expect(taken.text).toBe("disk version");
+    expect((await service.readUnit(unit.id)).text).toBe("disk version");
+    expect((await service.versions()).at(-1)?.action).toBe("external");
+    const saved = await service.writeUnit(unit.id, "disk version, then edited");
+    expect("conflict" in saved).toBe(false);
+    expect(await fs.readFile(path.join(root, unit.path), "utf8")).toBe("disk version, then edited");
+  });
+
+  it("returns the first hits and the total count, so that a cut list is never silent (SPEC-PRJ-005)", async () => {
+    const root = await tmp("search");
+    const service = new IpeService();
+    await service.createProject(root, "Search");
+    const unit = await service.addUnit("Chapter", null);
+    await service.writeUnit(unit.id, "bell ".repeat(250));
+    const result = await service.search("bell");
+    expect(result.hits.length).toBe(200);
+    expect(result.total).toBe(250);
+    expect((await service.search("absent")).total).toBe(0);
   });
 
   it("serves the same calls over the bridge, with errors carried as data", async () => {

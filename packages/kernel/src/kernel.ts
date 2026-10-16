@@ -255,6 +255,24 @@ export class Kernel {
   }
 
   /**
+   * Takes the text on disk as the current text of a unit: the author's choice after a conflict
+   * (SPEC-PRJ-003). The anchors that rest on it are re-resolved and a version with action
+   * external is recorded; the project is unchanged when the disk and the kernel agree.
+   */
+  async takeExternal(unitId: UnitId): Promise<ChangeResult & { text: string }> {
+    const node = this.findNode(unitId);
+    if (node === null) throw new KernelError("unknown_unit", `no unit ${unitId}`);
+    const onDisk = await this.storage.read(node.path);
+    if (onDisk === null) throw new KernelError("missing_unit", `the file of unit ${unitId} is absent from the disk`);
+    if (onDisk === this.readUnit(unitId)) return { version: this.currentVersion(), invalidated: [], anchorChanges: [], text: onDisk };
+    this.texts.set(unitId, onDisk);
+    const changes = this.reanchor(new Set([unitId]));
+    await this.persistTouched(changes.touched);
+    const version = await this.recordVersion("external", unitId);
+    return { version, invalidated: changes.invalidated, anchorChanges: changes.anchorChanges, text: onDisk };
+  }
+
+  /**
    * Writes the text of a unit, re-resolves the anchors that rest on it, records a version.
    * Refused with code `conflict` when the disk changed since the kernel last read or wrote the
    * unit, unless `force` is given: the author chooses, the product never overwrites silently.
@@ -709,8 +727,8 @@ export class Kernel {
     return c;
   }
 
-  /** Occurrences of a string in every unit and in the title or body of every live object. */
-  search(term: string, limit = 200): Hit[] {
+  /** Every occurrence of a string in every unit and in the title or body of every live object; a caller may cap the count. */
+  search(term: string, limit = Number.POSITIVE_INFINITY): Hit[] {
     const hits: Hit[] = [];
     if (term.length === 0) return hits;
     const needle = term.toLowerCase();

@@ -1,10 +1,12 @@
-// SPEC-PRJ-001 to SPEC-PRJ-005, as a user: the interface in a browser, the service behind the bridge.
+// SPEC-PRJ-001 to SPEC-PRJ-006, as a user: the interface in a browser, the service behind the bridge.
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
 const BRIDGE = "http://127.0.0.1:4321";
+/** The save runs 600 ms after the last change; waiting twice that settles every pending save. */
+const SETTLE_MS = 1_500;
 
 async function tmpFolder(name: string): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), `ipe-e2e-${name}-`));
@@ -28,6 +30,13 @@ async function createProject(page: Page, folder: string, name = "Serial") {
   await expect(page.getByTestId("project-title")).toHaveText(name);
 }
 
+async function openFolder(page: Page, folder: string) {
+  await openPage(page);
+  await page.getByTestId("folder").fill(folder);
+  await page.getByTestId("open").click();
+  await expect(page.getByTestId("project-title")).toBeVisible();
+}
+
 async function addUnit(page: Page, title: string) {
   await page.getByTestId("new-unit-title").fill(title);
   await page.getByTestId("add-unit").click();
@@ -41,12 +50,35 @@ async function typeInEditor(page: Page, text: string) {
   await page.keyboard.type(text);
 }
 
+async function appendInEditor(page: Page, text: string) {
+  await page.locator(".cm-content").click();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.type(text);
+}
+
 async function call(page: Page, method: string, args: unknown[]): Promise<unknown> {
   const response = await page.request.post(`${BRIDGE}/api/${method}`, { data: { args } });
   const payload = (await response.json()) as { ok: boolean; result?: unknown; error?: { message: string } };
   if (!payload.ok) throw new Error(payload.error?.message ?? "call failed");
   return payload.result;
 }
+
+async function unitByTitle(page: Page, title: string): Promise<{ id: string; title: string; path: string }> {
+  const project = (await call(page, "current", [])) as { units: Array<{ id: string; title: string; path: string; children: unknown[] }> };
+  const flat: Array<{ id: string; title: string; path: string }> = [];
+  const walk = (nodes: Array<{ id: string; title: string; path: string; children: unknown[] }>) => {
+    for (const n of nodes) {
+      flat.push({ id: n.id, title: n.title, path: n.path });
+      walk(n.children as typeof nodes);
+    }
+  };
+  walk(project.units);
+  const unit = flat.find((u) => u.title === title);
+  if (!unit) throw new Error(`no unit ${title}`);
+  return unit;
+}
+
+const bytes = (text: string) => Buffer.from(text, "utf8");
 
 test.describe("SPEC-PRJ-001 Project on disk", () => {
   test("TST-PRJ-001a: a created project reopens with the same units in the same order", async ({ page }) => {
@@ -67,16 +99,24 @@ test.describe("SPEC-PRJ-001 Project on disk", () => {
 
   test("TST-PRJ-001b: a folder of Markdown files without manifest opens; no existing file is modified", async ({ page }) => {
     const folder = await tmpFolder("adopt");
-    await fs.writeFile(path.join(folder, "one.md"), "# One\n\nFirst text.\n", "utf8");
-    await fs.writeFile(path.join(folder, "two.md"), "# Two\n\nSecond text.\n", "utf8");
-    const before = { one: await fs.readFile(path.join(folder, "one.md"), "utf8"), two: await fs.readFile(path.join(folder, "two.md"), "utf8") };
-    await openPage(page);
-    await page.getByTestId("folder").fill(folder);
-    await page.getByTestId("open").click();
-    await expect(page.getByTestId("unit-title")).toHaveText(["one", "two"]);
+    const files: Record<string, Buffer> = {
+      "one.md": bytes("# One\n\nFirst text.\n"),
+      "two.md": bytes("# Two\r\n\r\nSecond text, with Windows line endings.\r\n"),
+      "three.md": bytes("# Three\n\nThird text, no final newline"),
+    };
+    for (const [name, content] of Object.entries(files)) await fs.writeFile(path.join(folder, name), content);
+    await openFolder(page, folder);
+    await expect(page.getByTestId("unit-title")).toHaveText(["one", "three", "two"]);
     await expect(page.locator(".cm-content")).toContainText("First text.");
-    expect(await fs.readFile(path.join(folder, "one.md"), "utf8")).toBe(before.one);
-    expect(await fs.readFile(path.join(folder, "two.md"), "utf8")).toBe(before.two);
+    // Every unit selected from the outline, each shown long enough for a save to have run if one were scheduled.
+    for (const title of ["two", "three", "one"]) {
+      await page.getByTestId("unit-title").filter({ hasText: title }).click();
+      await expect(page.getByTestId("save-state")).toHaveText("saved");
+      await page.waitForTimeout(SETTLE_MS);
+    }
+    for (const [name, content] of Object.entries(files)) {
+      expect((await fs.readFile(path.join(folder, name))).equals(content), `${name} must be byte-identical`).toBe(true);
+    }
     await expect(page.getByTestId("save-state")).toHaveText("saved");
   });
 });
@@ -90,24 +130,33 @@ test.describe("SPEC-PRJ-002 Reorder and move without loss", () => {
     await addUnit(page, "The ford");
     await typeInEditor(page, "Kestrel reached the ford by dusk. The bridge was gone.");
     await expect(page.getByTestId("save-state")).toHaveText("saved");
-    const project = (await call(page, "current", [])) as { units: Array<{ id: string; title: string }> };
-    const ford = project.units.find((u) => u.title === "The ford");
-    expect(ford).toBeDefined();
-    await call(page, "createObject", [{ kind: "note", title: "ford at dusk", origin: "author", action: "note", anchors: [{ unit: ford?.id, start: 0, end: 33 }] }, "author"]);
-    await call(page, "createObject", [{ kind: "fact", title: "no bridge", origin: "assistant", action: "extract", anchors: [{ unit: ford?.id, start: 34, end: 54 }] }, "assistant"]);
+    // A beat under the scene: what the scene carries includes its descendants.
+    const ford = await unitByTitle(page, "The ford");
+    await page.getByTestId("new-unit-title").fill("Dusk");
+    await page.getByTestId(`unit-${ford.id}`).getByTitle("add a child unit").click();
+    await expect(page.getByTestId("unit-title").filter({ hasText: "Dusk" })).toBeVisible();
+    await typeInEditor(page, "Night fell on the ford.");
+    await expect(page.getByTestId("save-state")).toHaveText("saved");
+    const dusk = await unitByTitle(page, "Dusk");
+    await call(page, "createObject", [{ kind: "note", title: "ford at dusk", origin: "author", action: "note", anchors: [{ unit: ford.id, start: 0, end: 33 }] }, "author"]);
+    await call(page, "createObject", [{ kind: "fact", title: "no bridge", origin: "assistant", action: "extract", anchors: [{ unit: ford.id, start: 34, end: 54 }] }, "assistant"]);
+    await call(page, "createObject", [{ kind: "note", title: "night", origin: "author", action: "note", anchors: [{ unit: dusk.id, start: 0, end: 10 }] }, "author"]);
+    const gone = (await call(page, "createObject", [{ kind: "note", title: "deleted", origin: "author", action: "note", anchors: [{ unit: ford.id, start: 0, end: 7 }] }, "author"])) as { id: string };
+    await call(page, "deleteObject", [gone.id]);
     await page.reload();
     await page.getByTestId("folder").fill(folder);
     await page.getByTestId("open").click();
-    await expect(page.getByTestId("object")).toHaveCount(2);
+    await expect(page.getByTestId("object")).toHaveCount(3);
     // Move "The ford" under "Chapter 2": select it, then the "move under the previous unit" gesture.
-    const row = page.getByTestId(`unit-${ford?.id ?? ""}`);
+    const row = page.getByTestId(`unit-${ford.id}`);
     await row.getByTestId("unit-title").click();
     await row.getByTitle("move under the previous unit").click();
-    await expect(page.getByTestId("toast")).toHaveText("moved, 2 object(s) carried");
+    await expect(page.getByTestId("toast")).toHaveText("moved, 3 object(s) carried");
     await shot(page, "05-move-unit-carrying-objects");
-    const manifest = JSON.parse(await fs.readFile(path.join(folder, "ipe.json"), "utf8")) as { units: Array<{ title: string; children: Array<{ title: string }> }> };
+    const manifest = JSON.parse(await fs.readFile(path.join(folder, "ipe.json"), "utf8")) as { units: Array<{ title: string; children: Array<{ title: string; children: Array<{ title: string }> }> }> };
     expect(manifest.units.map((u) => u.title)).toEqual(["Chapter 1", "Chapter 2"]);
     expect(manifest.units[1]?.children.map((c) => c.title)).toEqual(["The ford"]);
+    expect(manifest.units[1]?.children[0]?.children.map((c) => c.title)).toEqual(["Dusk"]);
     await page.getByTestId("object").first().click();
     await expect(page.getByTestId("inspector")).toContainText("intact");
     await expect(page.getByTestId("inspector")).toContainText("Kestrel reached the ford by dusk.");
@@ -118,25 +167,79 @@ test.describe("SPEC-PRJ-002 Reorder and move without loss", () => {
 test.describe("SPEC-PRJ-003 Long-form editing with visible save state", () => {
   test("TST-PRJ-003a: the displayed state follows saved, unsaved, and conflict transitions exactly", async ({ page }) => {
     const folder = await tmpFolder("state");
+    const chapter1 = path.join(folder, "chapter-1.md");
+    const chapter2 = path.join(folder, "chapter-2.md");
     await createProject(page, folder);
     await addUnit(page, "Chapter 1");
     await expect(page.getByTestId("save-state")).toHaveText("saved");
     await typeInEditor(page, "The harbour was quiet.");
     await expect(page.getByTestId("save-state")).toHaveText("saved");
     await shot(page, "03-editing-saved");
-    expect(await fs.readFile(path.join(folder, "chapter-1.md"), "utf8")).toBe("The harbour was quiet.");
-    await fs.writeFile(path.join(folder, "chapter-1.md"), "Changed on disk by another program.", "utf8");
-    await page.locator(".cm-content").click();
-    await page.keyboard.press("End");
-    await page.keyboard.type(" Mara counted the boats.");
+    expect(await fs.readFile(chapter1, "utf8")).toBe("The harbour was quiet.");
+
+    // Conflict, resolved by keeping the author's text.
+    await fs.writeFile(chapter1, "Changed on disk by another program.", "utf8");
+    await appendInEditor(page, " Mara counted the boats.");
     await expect(page.getByTestId("save-state")).toHaveText("conflict");
     await expect(page.getByTestId("conflict-disk")).toHaveText("Changed on disk by another program.");
     await expect(page.getByTestId("conflict-mine")).toHaveText("The harbour was quiet. Mara counted the boats.");
     await shot(page, "04-conflict-both-texts");
-    expect(await fs.readFile(path.join(folder, "chapter-1.md"), "utf8")).toBe("Changed on disk by another program.");
+    expect(await fs.readFile(chapter1, "utf8")).toBe("Changed on disk by another program.");
     await page.getByTestId("keep-mine").click();
     await expect(page.getByTestId("save-state")).toHaveText("saved");
-    expect(await fs.readFile(path.join(folder, "chapter-1.md"), "utf8")).toBe("The harbour was quiet. Mara counted the boats.");
+    expect(await fs.readFile(chapter1, "utf8")).toBe("The harbour was quiet. Mara counted the boats.");
+
+    // Conflict, resolved by taking the disk's text: the editor shows it, and the next edit lands without a conflict.
+    await fs.writeFile(chapter1, "Rewritten outside.", "utf8");
+    await appendInEditor(page, " Again.");
+    await expect(page.getByTestId("save-state")).toHaveText("conflict");
+    await page.getByTestId("take-disk").click();
+    await expect(page.getByTestId("save-state")).toHaveText("saved");
+    await expect(page.locator(".cm-content")).toContainText("Rewritten outside.");
+    await expect(page.locator(".cm-content")).not.toContainText("Again.");
+    expect(await fs.readFile(chapter1, "utf8")).toBe("Rewritten outside.");
+    await appendInEditor(page, " And inside.");
+    await expect(page.getByTestId("save-state")).toHaveText("saved");
+    await expect(page.getByTestId("conflict")).toHaveCount(0);
+    expect(await fs.readFile(chapter1, "utf8")).toBe("Rewritten outside. And inside.");
+
+    // A unit left within the save interval is saved before the next one shows, and the next one is untouched.
+    await addUnit(page, "Chapter 2");
+    await typeInEditor(page, "Second.");
+    await expect(page.getByTestId("save-state")).toHaveText("saved");
+    await page.getByTestId("unit-title").filter({ hasText: "Chapter 1" }).click();
+    await expect(page.locator(".cm-content")).toContainText("And inside.");
+    await appendInEditor(page, " Quick.");
+    await expect(page.getByTestId("save-state")).toHaveText("unsaved");
+    await page.getByTestId("unit-title").filter({ hasText: "Chapter 2" }).click();
+    await expect(page.locator(".cm-content")).toContainText("Second.");
+    await expect(page.getByTestId("save-state")).toHaveText("saved");
+    await page.waitForTimeout(SETTLE_MS);
+    expect(await fs.readFile(chapter1, "utf8")).toBe("Rewritten outside. And inside. Quick.");
+    expect(await fs.readFile(chapter2, "utf8")).toBe("Second.");
+
+    // An edit reverted within the interval leaves nothing to save: the state returns to saved and the disk stays.
+    await appendInEditor(page, "a");
+    await expect(page.getByTestId("save-state")).toHaveText("unsaved");
+    await page.keyboard.press("Backspace");
+    await expect(page.getByTestId("save-state")).toHaveText("saved");
+    await page.waitForTimeout(SETTLE_MS);
+    expect(await fs.readFile(chapter2, "utf8")).toBe("Second.");
+    await expect(page.getByTestId("save-state")).toHaveText("saved");
+
+    // A unit left within the interval while its disk changed: the save runs first, the conflict is shown, the author stays.
+    await fs.writeFile(chapter2, "Changed outside again.", "utf8");
+    await appendInEditor(page, " Mine.");
+    await page.getByTestId("unit-title").filter({ hasText: "Chapter 1" }).click();
+    await expect(page.getByTestId("save-state")).toHaveText("conflict");
+    await expect(page.getByTestId("conflict-mine")).toHaveText("Second. Mine.");
+    await expect(page.locator(".cm-content")).toContainText("Second. Mine.");
+    expect(await fs.readFile(chapter2, "utf8")).toBe("Changed outside again.");
+    await page.getByTestId("keep-mine").click();
+    await expect(page.getByTestId("save-state")).toHaveText("saved");
+    expect(await fs.readFile(chapter2, "utf8")).toBe("Second. Mine.");
+    await page.getByTestId("unit-title").filter({ hasText: "Chapter 1" }).click();
+    await expect(page.locator(".cm-content")).toContainText("Quick.");
   });
 
   test("TST-PRJ-003b: with the save path made unwritable, the text is kept and recoverable", async ({ page }) => {
@@ -148,9 +251,7 @@ test.describe("SPEC-PRJ-003 Long-form editing with visible save state", () => {
     await expect(page.getByTestId("save-state")).toHaveText("saved");
     await fs.chmod(folder, 0o555);
     try {
-      await page.locator(".cm-content").click();
-      await page.keyboard.press("End");
-      await page.keyboard.type(" After.");
+      await appendInEditor(page, " After.");
       await expect(page.getByTestId("save-error")).toBeVisible();
       await expect(page.getByTestId("save-state")).toHaveText("unsaved");
       await expect(page.locator(".cm-content")).toContainText("Before the failure. After.");
@@ -164,9 +265,7 @@ test.describe("SPEC-PRJ-003 Long-form editing with visible save state", () => {
     await expect(page.getByTestId("save-state")).toHaveText("saved");
     await expect(page.getByTestId("save-error")).toHaveCount(0);
     expect(await fs.readFile(path.join(folder, "chapter-1.md"), "utf8")).toBe("Before the failure. After.");
-    await page.locator(".cm-content").click();
-    await page.keyboard.press("End");
-    await page.keyboard.type(" Recovered.");
+    await appendInEditor(page, " Recovered.");
     await expect(page.getByTestId("save-state")).toHaveText("saved");
     expect(await fs.readFile(path.join(folder, "chapter-1.md"), "utf8")).toBe("Before the failure. After. Recovered.");
   });
@@ -180,15 +279,24 @@ test.describe("SPEC-PRJ-004 Outline view", () => {
     await addUnit(page, "B");
     await addUnit(page, "C");
     const filesBefore = await Promise.all(["a.md", "b.md", "c.md"].map((f) => fs.readFile(path.join(folder, f), "utf8")));
-    const project = (await call(page, "current", [])) as { units: Array<{ id: string; title: string }> };
-    const c = project.units.find((u) => u.title === "C");
-    const row = page.getByTestId(`unit-${c?.id ?? ""}`);
+    const manifestOf = async () => JSON.parse(await fs.readFile(path.join(folder, "ipe.json"), "utf8")) as { units: Array<{ title: string; path: string }> };
+    const c = await unitByTitle(page, "C");
+    const row = page.getByTestId(`unit-${c.id}`);
     await row.getByTestId("unit-title").click();
     await row.getByTitle("move up").click();
     await expect(page.getByTestId("unit-title")).toHaveText(["A", "C", "B"]);
     await shot(page, "08-outline-reordered");
-    const manifest = JSON.parse(await fs.readFile(path.join(folder, "ipe.json"), "utf8")) as { units: Array<{ title: string }> };
-    expect(manifest.units.map((u) => u.title)).toEqual(["A", "C", "B"]);
+    expect((await manifestOf()).units.map((u) => u.title)).toEqual(["A", "C", "B"]);
+    await row.getByTitle("move down").click();
+    await expect(page.getByTestId("unit-title")).toHaveText(["A", "B", "C"]);
+    expect((await manifestOf()).units.map((u) => u.title)).toEqual(["A", "B", "C"]);
+    // A rename changes the title in the manifest, and neither the file nor its path.
+    const b = await unitByTitle(page, "B");
+    await page.getByTestId(`unit-${b.id}`).getByTitle("rename").click();
+    await page.getByTestId("rename-input").fill("Bee");
+    await page.getByTestId("rename-input").press("Enter");
+    await expect(page.getByTestId("unit-title")).toHaveText(["A", "Bee", "C"]);
+    expect((await manifestOf()).units.map((u) => [u.title, u.path])).toEqual([["A", "a.md"], ["Bee", "b.md"], ["C", "c.md"]]);
     const filesAfter = await Promise.all(["a.md", "b.md", "c.md"].map((f) => fs.readFile(path.join(folder, f), "utf8")));
     expect(filesAfter).toEqual(filesBefore);
   });
@@ -207,9 +315,39 @@ test.describe("SPEC-PRJ-005 Project search", () => {
     await page.getByTestId("search").fill("bell");
     await expect(page.getByTestId("search-hit")).toHaveCount(3);
     await expect(page.getByTestId("search-hit").first()).toContainText("Chapter 1");
+    await expect(page.getByTestId("search-truncated")).toHaveCount(0);
     await shot(page, "09-search-hits");
     await page.getByTestId("search-hit").first().click();
     await expect(page.locator(".cm-content")).toContainText("The bell rang once.");
     await expect(page.getByTestId("unit-title").filter({ hasText: "Chapter 1" })).toBeVisible();
+    // A list cut at 200 says so, with the total: nothing is silently left out.
+    const chapter2 = await unitByTitle(page, "Chapter 2");
+    await call(page, "writeUnit", [chapter2.id, "bell ".repeat(250), { force: true }]);
+    await page.getByTestId("search").fill("bel");
+    await page.getByTestId("search").fill("bell");
+    await expect(page.getByTestId("search-hit")).toHaveCount(200);
+    await expect(page.getByTestId("search-truncated")).toHaveText("showing 200 of 252 hits; narrow the search to see the rest");
+  });
+});
+
+test.describe("SPEC-PRJ-006 Markdown round trip", () => {
+  test("TST-PRJ-006c: a unit edited in the interface keeps its bytes, line endings and trailing spaces included", async ({ page }) => {
+    const folder = await tmpFolder("roundtrip-ui");
+    await fs.writeFile(path.join(folder, "crlf.md"), bytes("# Two\r\n\r\nSecond text.\r\n"));
+    await fs.writeFile(path.join(folder, "spaces.md"), bytes("Line with two spaces  \nnext\n"));
+    await openFolder(page, folder);
+    await page.getByTestId("unit-title").filter({ hasText: "crlf" }).click();
+    await page.locator(".cm-content").click();
+    await page.keyboard.press("ControlOrMeta+Home");
+    await page.keyboard.press("End");
+    await page.keyboard.type(" edited");
+    await expect(page.getByTestId("save-state")).toHaveText("saved");
+    await page.waitForTimeout(SETTLE_MS);
+    expect((await fs.readFile(path.join(folder, "crlf.md"))).equals(bytes("# Two edited\r\n\r\nSecond text.\r\n"))).toBe(true);
+    await page.getByTestId("unit-title").filter({ hasText: "spaces" }).click();
+    await appendInEditor(page, "!");
+    await expect(page.getByTestId("save-state")).toHaveText("saved");
+    await page.waitForTimeout(SETTLE_MS);
+    expect((await fs.readFile(path.join(folder, "spaces.md"))).equals(bytes("Line with two spaces  \nnext\n!"))).toBe(true);
   });
 });
